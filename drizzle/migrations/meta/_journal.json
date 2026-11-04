@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793824230050,
+      "tag": "0000_gpu_tracker_schema",
+      "breakpoints": true
+    }
+  ]
 }

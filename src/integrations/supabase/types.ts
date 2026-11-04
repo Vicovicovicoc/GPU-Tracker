@@ -14,7 +14,278 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alert_log: {
+        Row: {
+          id: number
+          kind: string
+          offer_id: string
+          price: number
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: number
+          kind: string
+          offer_id: string
+          price: number
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: number
+          kind?: string
+          offer_id?: string
+          price?: number
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_log_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gpus: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          last_refreshed_at: string | null
+          match_token: string
+          name: string
+          search_query: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          last_refreshed_at?: string | null
+          match_token: string
+          name: string
+          search_query: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          last_refreshed_at?: string | null
+          match_token?: string
+          name?: string
+          search_query?: string
+        }
+        Relationships: []
+      }
+      offers: {
+        Row: {
+          first_seen_at: string
+          gpu_id: string
+          id: string
+          in_stock: boolean
+          last_checked_at: string
+          old_price: number | null
+          price: number
+          store: string
+          title: string
+          url: string
+        }
+        Insert: {
+          first_seen_at?: string
+          gpu_id: string
+          id?: string
+          in_stock?: boolean
+          last_checked_at?: string
+          old_price?: number | null
+          price: number
+          store: string
+          title: string
+          url: string
+        }
+        Update: {
+          first_seen_at?: string
+          gpu_id?: string
+          id?: string
+          in_stock?: boolean
+          last_checked_at?: string
+          old_price?: number | null
+          price?: number
+          store?: string
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_gpu_id_fkey"
+            columns: ["gpu_id"]
+            isOneToOne: false
+            referencedRelation: "gpus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_history: {
+        Row: {
+          gpu_id: string
+          id: number
+          in_stock: boolean
+          offer_id: string
+          price: number
+          recorded_at: string
+        }
+        Insert: {
+          gpu_id: string
+          id?: number
+          in_stock?: boolean
+          offer_id: string
+          price: number
+          recorded_at?: string
+        }
+        Update: {
+          gpu_id?: string
+          id?: number
+          in_stock?: boolean
+          offer_id?: string
+          price?: number
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_gpu_id_fkey"
+            columns: ["gpu_id"]
+            isOneToOne: false
+            referencedRelation: "gpus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_history_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrape_jobs: {
+        Row: {
+          gpu_id: string
+          started_at: string
+          store: string
+          url: string
+        }
+        Insert: {
+          gpu_id: string
+          started_at?: string
+          store: string
+          url: string
+        }
+        Update: {
+          gpu_id?: string
+          started_at?: string
+          store?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrape_jobs_gpu_id_fkey"
+            columns: ["gpu_id"]
+            isOneToOne: false
+            referencedRelation: "gpus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_status: {
+        Row: {
+          last_attempt_at: string | null
+          last_error: string | null
+          last_success_at: string | null
+          store: string
+        }
+        Insert: {
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          store: string
+        }
+        Update: {
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          store?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          brands: string[]
+          budget_max: number | null
+          daily_report: boolean
+          drop_threshold: number
+          email: string | null
+          refresh_hours: number
+          stores: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brands?: string[]
+          budget_max?: number | null
+          daily_report?: boolean
+          drop_threshold?: number
+          email?: string | null
+          refresh_hours?: number
+          stores?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brands?: string[]
+          budget_max?: number | null
+          daily_report?: boolean
+          drop_threshold?: number
+          email?: string | null
+          refresh_hours?: number
+          stores?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          created_at: string
+          gpu_id: string
+          id: string
+          max_price: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gpu_id: string
+          id?: string
+          max_price?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gpu_id?: string
+          id?: string
+          max_price?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_gpu_id_fkey"
+            columns: ["gpu_id"]
+            isOneToOne: false
+            referencedRelation: "gpus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
