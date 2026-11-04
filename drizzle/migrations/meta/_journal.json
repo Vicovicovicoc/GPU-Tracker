@@ -8,6 +8,13 @@
       "when": 1793824230050,
       "tag": "0000_gpu_tracker_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793824297900,
+      "tag": "0001_scrape_batches",
+      "breakpoints": true
     }
   ]
 }

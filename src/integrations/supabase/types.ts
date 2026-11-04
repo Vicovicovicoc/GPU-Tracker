@@ -168,6 +168,33 @@ export type Database = {
           },
         ]
       }
+      scrape_batches: {
+        Row: {
+          error: string | null
+          id: string
+          ingested_at: string | null
+          started_at: string
+          status: string
+          url_count: number
+        }
+        Insert: {
+          error?: string | null
+          id: string
+          ingested_at?: string | null
+          started_at?: string
+          status?: string
+          url_count?: number
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          ingested_at?: string | null
+          started_at?: string
+          status?: string
+          url_count?: number
+        }
+        Relationships: []
+      }
       scrape_jobs: {
         Row: {
           gpu_id: string
