@@ -10,6 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAlertesRouteImport } from './routes/_authenticated/alertes'
+import { Route as AuthenticatedBoutiquesRouteImport } from './routes/_authenticated/boutiques'
+import { Route as AuthenticatedCartesRouteImport } from './routes/_authenticated/cartes'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
 import { Route as ApiPublicJobsDailyReportRouteImport } from './routes/api/public/jobs/daily-report'
 import { Route as ApiPublicJobsRefreshRouteImport } from './routes/api/public/jobs/refresh'
 
@@ -17,6 +24,40 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAlertesRoute = AuthenticatedAlertesRouteImport.update({
+  id: '/alertes',
+  path: '/alertes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBoutiquesRoute = AuthenticatedBoutiquesRouteImport.update({
+  id: '/boutiques',
+  path: '/boutiques',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCartesRoute = AuthenticatedCartesRouteImport.update({
+  id: '/cartes',
+  path: '/cartes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedParametresRoute = AuthenticatedParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicJobsDailyReportRoute =
   ApiPublicJobsDailyReportRouteImport.update({
@@ -32,34 +73,80 @@ const ApiPublicJobsRefreshRoute = ApiPublicJobsRefreshRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/alertes': typeof AuthenticatedAlertesRoute
+  '/boutiques': typeof AuthenticatedBoutiquesRoute
+  '/cartes': typeof AuthenticatedCartesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/parametres': typeof AuthenticatedParametresRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/alertes': typeof AuthenticatedAlertesRoute
+  '/boutiques': typeof AuthenticatedBoutiquesRoute
+  '/cartes': typeof AuthenticatedCartesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/parametres': typeof AuthenticatedParametresRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/alertes': typeof AuthenticatedAlertesRoute
+  '/_authenticated/boutiques': typeof AuthenticatedBoutiquesRoute
+  '/_authenticated/cartes': typeof AuthenticatedCartesRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/parametres': typeof AuthenticatedParametresRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/jobs/daily-report' | '/api/public/jobs/refresh'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/alertes'
+    | '/boutiques'
+    | '/cartes'
+    | '/dashboard'
+    | '/parametres'
+    | '/api/public/jobs/daily-report'
+    | '/api/public/jobs/refresh'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/jobs/daily-report' | '/api/public/jobs/refresh'
+  to:
+    | '/'
+    | '/auth'
+    | '/alertes'
+    | '/boutiques'
+    | '/cartes'
+    | '/dashboard'
+    | '/parametres'
+    | '/api/public/jobs/daily-report'
+    | '/api/public/jobs/refresh'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/alertes'
+    | '/_authenticated/boutiques'
+    | '/_authenticated/cartes'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/parametres'
     | '/api/public/jobs/daily-report'
     | '/api/public/jobs/refresh'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   ApiPublicJobsDailyReportRoute: typeof ApiPublicJobsDailyReportRoute
   ApiPublicJobsRefreshRoute: typeof ApiPublicJobsRefreshRoute
 }
@@ -72,6 +159,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/alertes': {
+      id: '/_authenticated/alertes'
+      path: '/alertes'
+      fullPath: '/alertes'
+      preLoaderRoute: typeof AuthenticatedAlertesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/boutiques': {
+      id: '/_authenticated/boutiques'
+      path: '/boutiques'
+      fullPath: '/boutiques'
+      preLoaderRoute: typeof AuthenticatedBoutiquesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cartes': {
+      id: '/_authenticated/cartes'
+      path: '/cartes'
+      fullPath: '/cartes'
+      preLoaderRoute: typeof AuthenticatedCartesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/parametres': {
+      id: '/_authenticated/parametres'
+      path: '/parametres'
+      fullPath: '/parametres'
+      preLoaderRoute: typeof AuthenticatedParametresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/jobs/daily-report': {
       id: '/api/public/jobs/daily-report'
@@ -90,8 +226,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAlertesRoute: typeof AuthenticatedAlertesRoute
+  AuthenticatedBoutiquesRoute: typeof AuthenticatedBoutiquesRoute
+  AuthenticatedCartesRoute: typeof AuthenticatedCartesRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAlertesRoute: AuthenticatedAlertesRoute,
+  AuthenticatedBoutiquesRoute: AuthenticatedBoutiquesRoute,
+  AuthenticatedCartesRoute: AuthenticatedCartesRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedParametresRoute: AuthenticatedParametresRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   ApiPublicJobsDailyReportRoute: ApiPublicJobsDailyReportRoute,
   ApiPublicJobsRefreshRoute: ApiPublicJobsRefreshRoute,
 }
