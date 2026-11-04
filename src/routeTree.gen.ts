@@ -10,33 +10,58 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicJobsDailyReportRouteImport } from './routes/api/public/jobs/daily-report'
+import { Route as ApiPublicJobsRefreshRouteImport } from './routes/api/public/jobs/refresh'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJobsDailyReportRoute =
+  ApiPublicJobsDailyReportRouteImport.update({
+    id: '/api/public/jobs/daily-report',
+    path: '/api/public/jobs/daily-report',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicJobsRefreshRoute = ApiPublicJobsRefreshRouteImport.update({
+  id: '/api/public/jobs/refresh',
+  path: '/api/public/jobs/refresh',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
+  '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
+  '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
+  '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/jobs/daily-report' | '/api/public/jobs/refresh'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/jobs/daily-report' | '/api/public/jobs/refresh'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/public/jobs/daily-report'
+    | '/api/public/jobs/refresh'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicJobsDailyReportRoute: typeof ApiPublicJobsDailyReportRoute
+  ApiPublicJobsRefreshRoute: typeof ApiPublicJobsRefreshRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +73,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/daily-report': {
+      id: '/api/public/jobs/daily-report'
+      path: '/api/public/jobs/daily-report'
+      fullPath: '/api/public/jobs/daily-report'
+      preLoaderRoute: typeof ApiPublicJobsDailyReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/jobs/refresh': {
+      id: '/api/public/jobs/refresh'
+      path: '/api/public/jobs/refresh'
+      fullPath: '/api/public/jobs/refresh'
+      preLoaderRoute: typeof ApiPublicJobsRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicJobsDailyReportRoute: ApiPublicJobsDailyReportRoute,
+  ApiPublicJobsRefreshRoute: ApiPublicJobsRefreshRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
