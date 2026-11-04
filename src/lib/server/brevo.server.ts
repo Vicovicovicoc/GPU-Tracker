@@ -2,8 +2,8 @@ const GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 const SENDER = { name: "GPU Price Tracker", email: "victor.gloriant@gmail.com" };
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  const lov = process.env.LOVABLE_API_KEY;
-  const key = process.env.BREVO_API_KEY;
+  const lov = process.env['LOVABLE_API_KEY'];
+  const key = process.env['BREVO_API_KEY'];
   if (!lov || !key) throw new Error("Brevo n'est pas configuré");
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) throw new Error("Adresse e-mail invalide");
   const res = await fetch(`${GATEWAY}/smtp/email`, {
@@ -36,7 +36,7 @@ ${inner}
 </div></body></html>`;
 }
 
-export function offerRow(o: { title: string; store: string; price: number; old_price?: number | null; url: string; note?: string }) {
+export function offerRow(o: { title: string; store: string; price: number; old_price?: number | null; url: string; note?: string | undefined }) {
   const old = o.old_price && o.old_price > o.price
     ? ` <span style="text-decoration:line-through;color:#8a8f99;font-size:13px">${o.old_price.toFixed(2)} €</span>` : "";
   return `<div style="border:1px solid #e3e5ea;border-radius:10px;padding:12px 14px;margin-bottom:10px">

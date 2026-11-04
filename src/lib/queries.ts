@@ -53,7 +53,7 @@ export const settingsQuery = queryOptions({
     const uid = u.user!.id;
     const { data } = await supabase.from("user_settings").select("*").eq("user_id", uid).maybeSingle();
     if (data) return data;
-    const { data: created, error } = await supabase.from("user_settings").insert({ user_id: uid, email: u.user!.email }).select().single();
+    const { data: created, error } = await supabase.from("user_settings").insert({ user_id: uid, email: u.user!.email ?? null }).select().single();
     if (error) throw error;
     return created;
   },
