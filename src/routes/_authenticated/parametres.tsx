@@ -55,12 +55,14 @@ function Parametres() {
       toast.error("L'actualisation doit être comprise entre 1 et 24 heures.");
       return;
     }
-    void save({ [field]: number });
+    if (field === "budget_max") void save({ budget_max: number });
+    else if (field === "drop_threshold") void save({ drop_threshold: number });
+    else void save({ refresh_hours: number });
   }
 
   function saveEmail(value: string) {
     const email = value.trim();
-    if (email && !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       toast.error("Entre une adresse e-mail valide.");
       return;
     }
