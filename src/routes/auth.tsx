@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase-config";
 import { lovable } from "@/integrations/lovable/index";
 import "@lovable.dev/cloud-auth-js/styles.css";
 import { Button } from "@/components/ui/button";
@@ -28,12 +29,14 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const supabaseConfigured = isSupabaseConfigured();
 
   useEffect(() => {
+    if (!supabaseConfigured) return;
     supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/dashboard" }); });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => { if (s) navigate({ to: "/dashboard" }); });
     return () => data.subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, supabaseConfigured]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +52,21 @@ function AuthPage() {
   async function oauth(p: "google" | "lovable") {
     const r = await lovable.auth.signInWithOAuth(p, { redirect_uri: window.location.origin + "/auth" });
     if (r.error) toast.error(String(r.error.message ?? r.error));
+  }
+
+  if (!supabaseConfigured) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div role="alert" className="w-full max-w-md rounded-2xl border bg-card-gradient p-8 text-center shadow-glow">
+          <div className="font-mono text-xs tracking-[0.3em] text-primary">GPU PRICE TRACKER</div>
+          <h1 className="mt-3 text-2xl font-bold">Connexion indisponible</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Supabase n’est pas encore configuré dans Lovable Cloud. La connexion et les comptes seront disponibles dès que les variables SUPABASE_URL et SUPABASE_PUBLISHABLE_KEY seront renseignées.
+          </p>
+          <Button variant="outline" className="mt-6 w-full" asChild><Link to="/">Retour à l’accueil</Link></Button>
+        </div>
+      </main>
+    );
   }
 
   return (

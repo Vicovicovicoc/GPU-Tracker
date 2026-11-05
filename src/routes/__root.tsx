@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase-config";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -93,6 +94,8 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
+    // Public pages must remain available even before Supabase is connected in Lovable Cloud.
+    if (!isSupabaseConfigured()) return;
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();

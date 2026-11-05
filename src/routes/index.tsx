@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Activity, BellRing, LineChart, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isSupabaseConfigured } from "@/lib/supabase-config";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +35,15 @@ function Landing() {
         <p className="mt-6 max-w-xl text-lg text-muted-foreground">
           Des prix relevés sur les vraies fiches des boutiques françaises, en euros. Aucun prix inventé.
         </p>
+        {!isSupabaseConfigured() && (
+          <div role="status" className="mt-8 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+            <p className="font-semibold text-foreground">Connexion Supabase à configurer</p>
+            <p className="mt-1 text-muted-foreground">
+              La page d’accueil reste disponible, mais la connexion et les données du tableau de bord
+              seront activées après avoir connecté le projet Supabase dans Lovable Cloud.
+            </p>
+          </div>
+        )}
         <div className="mt-10 flex gap-3">
           <Button variant="hero" size="lg" asChild><Link to="/dashboard">Ouvrir le tableau de bord</Link></Button>
           <Button variant="outline" size="lg" asChild><Link to="/auth">Se connecter</Link></Button>
