@@ -34,10 +34,20 @@ function Dashboard() {
   const brand = new Map(gpus.map((g) => [g.id, g.brand]));
   const operationalStores = stores.filter((s) => !s.last_error && s.last_success_at).length;
   const last = offers.reduce<string | null>((m, o) => (!m || o.last_checked_at > m ? o.last_checked_at : m), null);
-  const chartData = history.map((point) => ({
-    ...point,
-    day: new Date(point.recorded_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
-  }));
+  const dailyLowest = new Map<string, { day: string; price: number; timestamp: number }>();
+  for (const point of history) {
+    const date = new Date(point.recorded_at);
+    const key = date.toISOString().slice(0, 10);
+    const current = dailyLowest.get(key);
+    if (!current || point.price < current.price) {
+      dailyLowest.set(key, {
+        day: date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+        price: point.price,
+        timestamp: date.getTime(),
+      });
+    }
+  }
+  const chartData = [...dailyLowest.values()].sort((a, b) => a.timestamp - b.timestamp);
 
   const stats = [
     { label: "GPU référencés", value: String(gpus.length), detail: "Cartes dans le catalogue" },
@@ -74,7 +84,7 @@ function Dashboard() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Historique des prix</h2>
-            <p className="text-sm text-muted-foreground">Évolution sur les 30 derniers jours pour une carte sélectionnée.</p>
+            <p className="text-sm text-muted-foreground">Meilleur prix relevé chaque jour, sur les 30 derniers jours.</p>
           </div>
           <Select value={selectedId} onValueChange={setSelectedGpu}>
             <SelectTrigger className="w-full sm:w-64"><SelectValue placeholder="Choisir une carte" /></SelectTrigger>
