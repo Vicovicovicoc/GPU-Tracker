@@ -2,13 +2,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STORES, storeName, titleMatches } from "@/lib/stores";
 import { sendEmail, emailLayout, offerRow } from "./brevo.server";
 
-const FC = "https://connector-gateway.lovable.dev/firecrawl/v2";
+const FC = "https://api.firecrawl.dev/v2";
 
 function fcHeaders() {
-  const lov = process.env['LOVABLE_API_KEY'];
   const key = process.env['FIRECRAWL_API_KEY'];
-  if (!lov || !key) throw new Error("Firecrawl n'est pas configuré");
-  return { "Content-Type": "application/json", Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key };
+  if (!key) throw new Error("Firecrawl n'est pas configuré");
+  return { "Content-Type": "application/json", Authorization: `Bearer ${key}` };
 }
 
 const PRODUCT_SCHEMA = {
