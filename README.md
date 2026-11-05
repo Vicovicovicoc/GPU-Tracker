@@ -35,6 +35,21 @@ npm run dev
 
 Renseigne les variables de `.env.local` avec les valeurs de ton projet. Les clés serveur (`SUPABASE_SERVICE_ROLE_KEY`, `FIRECRAWL_API_KEY`, `LOVABLE_API_KEY`, `BREVO_API_KEY`) ne doivent jamais être préfixées par `VITE_` ni exposées au navigateur.
 
+## Comptes utilisateurs
+
+- Inscription et connexion par e-mail et mot de passe (8 caractères minimum, avec une lettre et un chiffre), Google ou Lovable.
+- Mot de passe oublié : lien envoyé par e-mail, page `/reset-password`.
+- Page `/compte` : changement d'e-mail et de mot de passe, suppression du compte et de ses données.
+- Les réglages de l'utilisateur sont créés automatiquement à l'inscription (migration `0002_comptes_utilisateurs.sql`).
+- Seuls les administrateurs peuvent ajouter des cartes graphiques. Pour nommer un administrateur, exécute dans l'éditeur SQL :
+
+```sql
+INSERT INTO public.user_roles (user_id, role)
+SELECT id, 'admin' FROM auth.users WHERE email = 'adresse@exemple.fr';
+```
+
+Après avoir appliqué la migration, ajoute `/reset-password` aux URL de redirection autorisées de Supabase (Authentication → URL Configuration) et règle la longueur minimale des mots de passe sur 8 dans les paramètres d'authentification.
+
 ## Scripts
 
 ```sh
