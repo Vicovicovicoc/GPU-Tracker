@@ -43,7 +43,7 @@ function Parametres() {
           <div><Label>E-mail</Label><Input defaultValue={s.email ?? ""} onBlur={(e) => save({ email: e.target.value || null })} /></div>
           <div><Label>Budget max (€)</Label><Input type="number" defaultValue={s.budget_max ?? ""} onBlur={(e) => save({ budget_max: e.target.value ? Number(e.target.value) : null })} /></div>
           <div><Label>Seuil de baisse (%)</Label><Input type="number" defaultValue={s.drop_threshold} onBlur={(e) => save({ drop_threshold: Number(e.target.value) || 15 })} /></div>
-          <div><Label>Actualisation (heures)</Label><Input type="number" min={1} max={24} defaultValue={s.refresh_hours} onBlur={(e) => save({ refresh_hours: Number(e.target.value) || 6 })} /></div>
+          <div><Label>Actualisation (heures)</Label><Input type="number" min={1} max={24} defaultValue={s.refresh_hours} onBlur={(e) => save({ refresh_hours: Number(e.target.value) || 24 })} /></div>
         </div>
         <Button variant="outline" onClick={async () => { const r = await test(); r.sent ? toast.success("Rapport envoyé") : toast.info("Pas encore de prix à envoyer"); }}>Envoyer un rapport test</Button>
       </section>
