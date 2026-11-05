@@ -16,6 +16,7 @@ import { Route as AuthenticatedAlertesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedBoutiquesRouteImport } from './routes/_authenticated/boutiques'
 import { Route as AuthenticatedCartesRouteImport } from './routes/_authenticated/cartes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedNewsletterRouteImport } from './routes/_authenticated/newsletter'
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
 import { Route as ApiPublicJobsDailyReportRouteImport } from './routes/api/public/jobs/daily-report'
 import { Route as ApiPublicJobsRefreshRouteImport } from './routes/api/public/jobs/refresh'
@@ -54,6 +55,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNewsletterRoute = AuthenticatedNewsletterRouteImport.update({
+  id: '/newsletter',
+  path: '/newsletter',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedParametresRoute = AuthenticatedParametresRouteImport.update({
   id: '/parametres',
   path: '/parametres',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/boutiques': typeof AuthenticatedBoutiquesRoute
   '/cartes': typeof AuthenticatedCartesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/newsletter': typeof AuthenticatedNewsletterRoute
   '/parametres': typeof AuthenticatedParametresRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/boutiques': typeof AuthenticatedBoutiquesRoute
   '/cartes': typeof AuthenticatedCartesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/newsletter': typeof AuthenticatedNewsletterRoute
   '/parametres': typeof AuthenticatedParametresRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/_authenticated/boutiques': typeof AuthenticatedBoutiquesRoute
   '/_authenticated/cartes': typeof AuthenticatedCartesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/newsletter': typeof AuthenticatedNewsletterRoute
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/boutiques'
     | '/cartes'
     | '/dashboard'
+    | '/newsletter'
     | '/parametres'
     | '/api/public/jobs/daily-report'
     | '/api/public/jobs/refresh'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/boutiques'
     | '/cartes'
     | '/dashboard'
+    | '/newsletter'
     | '/parametres'
     | '/api/public/jobs/daily-report'
     | '/api/public/jobs/refresh'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/_authenticated/boutiques'
     | '/_authenticated/cartes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/newsletter'
     | '/_authenticated/parametres'
     | '/api/public/jobs/daily-report'
     | '/api/public/jobs/refresh'
@@ -202,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/newsletter': {
+      id: '/_authenticated/newsletter'
+      path: '/newsletter'
+      fullPath: '/newsletter'
+      preLoaderRoute: typeof AuthenticatedNewsletterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/parametres': {
       id: '/_authenticated/parametres'
       path: '/parametres'
@@ -231,6 +250,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBoutiquesRoute: typeof AuthenticatedBoutiquesRoute
   AuthenticatedCartesRoute: typeof AuthenticatedCartesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedNewsletterRoute: typeof AuthenticatedNewsletterRoute
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
 }
 
@@ -239,6 +259,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBoutiquesRoute: AuthenticatedBoutiquesRoute,
   AuthenticatedCartesRoute: AuthenticatedCartesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedNewsletterRoute: AuthenticatedNewsletterRoute,
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
 }
 
