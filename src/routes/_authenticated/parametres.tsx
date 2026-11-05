@@ -18,6 +18,12 @@ export const Route = createFileRoute("/_authenticated/parametres")({
   component: Parametres,
 });
 
+const TEST_REPORT_LIMIT_MESSAGES = {
+  burst: "Un rapport test vient d'être envoyé. Patientez une minute avant d'en demander un autre.",
+  daily: "Limite de 5 rapports test par jour atteinte. Réessayez demain.",
+  unavailable: "L'envoi de rapports test est momentanément indisponible. Réessayez plus tard.",
+} as const;
+
 function Parametres() {
   const qc = useQueryClient();
   const test = useServerFn(sendTestReport);
@@ -89,7 +95,8 @@ function Parametres() {
           onClick={async () => {
             try {
               const result = await test();
-              if (result.sent) toast.success("Rapport envoyé");
+              if (result.limited) toast.error(TEST_REPORT_LIMIT_MESSAGES[result.limited]);
+              else if (result.sent) toast.success("Rapport envoyé");
               else toast.info("Pas encore de prix à envoyer");
             } catch (error) {
               toast.error(error instanceof Error ? error.message : "Impossible d'envoyer le rapport.");

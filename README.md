@@ -48,6 +48,12 @@ INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'admin' FROM auth.users WHERE email = 'adresse@exemple.fr';
 ```
 
+Sécurité (migration `0003_audit_securite.sql`, à appliquer après la `0002`) :
+
+- `has_role` ne répond plus que pour l'utilisateur connecté : un compte ordinaire ne peut plus savoir qui est administrateur.
+- `syncRefresh` et `triggerRefresh` sont réservés aux administrateurs. Les tâches planifiées (`/api/public/jobs/*`) s'authentifient avec leur propre secret et ne sont pas concernées.
+- `sendTestReport` est limité côté serveur à 1 envoi par minute et 5 par 24 h et par utilisateur (table `rate_limits`, accessible uniquement avec la clé de service). Le rapport quotidien automatique n'est pas limité.
+
 Après avoir appliqué la migration, ajoute `/reset-password` aux URL de redirection autorisées de Supabase (Authentication → URL Configuration) et règle la longueur minimale des mots de passe sur 8 dans les paramètres d'authentification.
 
 ## Scripts
