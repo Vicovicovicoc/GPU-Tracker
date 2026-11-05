@@ -23,12 +23,22 @@ export function parseListing(md: string, origin: string): ParsedProduct[] {
   const links = [...md.matchAll(/\[([^\]\n]{12,300})\]\(([^)\s]+)/g)];
   const seen = new Set<string>();
   const out: ParsedProduct[] = [];
+  let expectedOrigin: string;
+  try {
+    expectedOrigin = new URL(origin).origin;
+  } catch {
+    return out;
+  }
+
   links.forEach((m, i) => {
     const title = m[1]!.replace(/[*_#!]/g, "").trim();
     if (/^image|^!\[/i.test(title)) return;
-    let url: string;
-    try { url = new URL(m[2]!, origin).toString(); } catch { return; }
-    if (!url.startsWith(origin) || seen.has(url)) return;
+    let parsedUrl: URL;
+    try { parsedUrl = new URL(m[2]!, origin); } catch { return; }
+    // A prefix check would also accept lookalike hosts such as "shop.example.evil".
+    if (parsedUrl.origin !== expectedOrigin) return;
+    const url = parsedUrl.toString();
+    if (seen.has(url)) return;
     const end = links[i + 1]?.index ?? m.index! + 800;
     const windowText = md.slice(m.index! + m[0].length, Math.min(end, m.index! + 800));
     const prices = extractPrices(windowText);

@@ -116,9 +116,10 @@ async function ingestDocs(docs: FcDoc[]) {
       if (!p.title || !p.url || typeof p.price !== "number") continue;
       if (p.price < 60 || p.price > 6000) continue;
       if (!titleMatches(p.title, gpu.match_token)) continue;
-      let link: string;
-      try { link = new URL(p.url, store.origin).toString(); } catch { continue; }
-      if (!link.startsWith(store.origin)) continue;
+      let parsedLink: URL;
+      try { parsedLink = new URL(p.url, store.origin); } catch { continue; }
+      if (parsedLink.origin !== new URL(store.origin).origin) continue;
+      const link = parsedLink.toString();
       const old = typeof p.old_price === "number" && p.old_price > p.price ? p.old_price : null;
       const inStock = p.in_stock !== false;
       seen.push(link);
