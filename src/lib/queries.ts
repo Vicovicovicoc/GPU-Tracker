@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getIsAdmin } from "@/lib/account.functions";
 
 export const gpusQuery = queryOptions({
   queryKey: ["gpus"],
@@ -77,4 +78,10 @@ export const alertLogQuery = queryOptions({
     if (error) throw error;
     return data;
   },
+});
+
+export const adminQuery = queryOptions({
+  queryKey: ["is-admin"],
+  staleTime: 5 * 60_000,
+  queryFn: () => getIsAdmin(),
 });

@@ -1,9 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// Réservé aux administrateurs : chaque relevé forcé consomme des crédits Firecrawl.
+// Le relevé automatique (tâche planifiée) reste inchangé et ne passe pas par ici.
 export const triggerRefresh = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const { requireAdmin } = await import("@/lib/server/admin.server");
+    await requireAdmin(context.userId);
     const { startRefresh } = await import("@/lib/server/scraper.server");
     return startRefresh({ force: true });
   });

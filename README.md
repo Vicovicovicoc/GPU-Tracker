@@ -41,7 +41,7 @@ Renseigne les variables de `.env.local` avec les valeurs de ton projet. Les clé
 - Mot de passe oublié : lien envoyé par e-mail, page `/reset-password`.
 - Page `/compte` : changement d'e-mail et de mot de passe, suppression du compte et de ses données.
 - Les réglages de l'utilisateur sont créés automatiquement à l'inscription (migration `0002_comptes_utilisateurs.sql`).
-- Seuls les administrateurs peuvent ajouter des cartes graphiques. Pour nommer un administrateur, exécute dans l'éditeur SQL :
+- Seuls les administrateurs peuvent ajouter des cartes graphiques et lancer un relevé de prix forcé (bouton « Actualiser les prix »). Le relevé automatique n'est pas concerné. Pour nommer un administrateur, exécute dans l'éditeur SQL :
 
 ```sql
 INSERT INTO public.user_roles (user_id, role)
