@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Line, LineChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Line, LineChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import { RefreshButton } from "@/components/RefreshButton";
 import { OfferCard } from "@/components/OfferCard";
 import { Badge } from "@/components/ui/badge";
@@ -86,11 +86,11 @@ function Dashboard() {
         {loadingGpus || loadingHistory ? (
           <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Chargement de l'historique…</div>
         ) : chartData.length ? (
-          <ChartContainer config={{ price: { label: "Prix", color: "hsl(var(--primary))" } }} className="h-64 w-full">
+          <ChartContainer config={{ price: { label: "Prix", color: "var(--primary)" } }} className="h-64 w-full">
             <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 0, left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="day" tickLine={false} axisLine={false} minTickGap={24} />
-              <YAxis tickFormatter={(value: number) => `${value} €`} tickLine={false} axisLine={false} width={64} />
+              <YAxis tickFormatter={(value) => `${Number(value)} €`} tickLine={false} axisLine={false} width={64} />
               <Tooltip formatter={(value) => [eur(Number(value)), "Prix"]} labelFormatter={(label) => `Date : ${label}`} />
               <Line type="monotone" dataKey="price" stroke="var(--color-price)" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
             </LineChart>
