@@ -1,26 +1,49 @@
-# Gpu Tracker
+# GPU Price Tracker
 
-Implement exactly the screenshot and nothing else
+Application web de suivi et de comparaison des prix de cartes graphiques chez plusieurs marchands français.
 
-This project was built with [Lovable](https://lovable.dev).
+**Application en ligne :** https://gpu-tracker.lovable.app
 
-**Live app**: https://gpu-tracker.lovable.app
+## Fonctionnalités
 
-## Build with Lovable
+- Tableau de bord avec indicateurs et historique des meilleurs prix.
+- Catalogue et comparateur de GPU avec filtres par marque, recherche et tri.
+- Liste de suivi personnelle et seuils de prix.
+- Historique des alertes et notifications par e-mail.
+- État des boutiques et suivi des relevés.
+- Collecte des résultats de recherche via Firecrawl, stockage dans Supabase et e-mails via Brevo.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/94d46f44-3b7d-46ec-838a-26c53a5b5641).
+## Stack technique
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- React 19, TypeScript, Vite et TanStack Start/Router.
+- Tailwind CSS et composants Radix UI.
+- TanStack Query.
+- Supabase (authentification et base de données).
+- Firecrawl et Brevo côté serveur.
 
-## Development
+## Développement local
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Prérequis : Node.js et npm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+git clone https://github.com/Vicovicovicoc/GPU-Tracker.git
+cd GPU-Tracker
+npm install
+cp .env.example .env.local
 npm run dev
 ```
+
+Renseigne les variables de `.env.local` avec les valeurs de ton projet. Les clés serveur (`SUPABASE_SERVICE_ROLE_KEY`, `FIRECRAWL_API_KEY`, `LOVABLE_API_KEY`, `BREVO_API_KEY`) ne doivent jamais être préfixées par `VITE_` ni exposées au navigateur.
+
+## Scripts
+
+```sh
+npm run dev       # serveur de développement
+npm run build     # build de production
+npm run lint      # ESLint
+npm test          # tests Vitest
+```
+
+## Contribution
+
+Le projet est connecté à Lovable. Évite de réécrire l'historique Git publié (force push, rebase ou amend de commits déjà poussés). Utilise une branche dédiée pour les changements importants et une Pull Request pour les faire relire avant fusion.

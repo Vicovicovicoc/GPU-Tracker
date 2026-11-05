@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { to: "/newsletter", label: "Newsletter", icon: Newspaper },
-  { to: "/cartes", label: "Cartes graphiques", icon: Cpu },
+  { to: "/cartes", label: "Comparateur GPU", icon: Cpu },
   { to: "/alertes", label: "Alertes", icon: Bell },
   { to: "/boutiques", label: "Boutiques", icon: Store },
   { to: "/parametres", label: "Paramètres", icon: Settings },
