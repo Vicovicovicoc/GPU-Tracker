@@ -36,6 +36,7 @@ function Dashboard() {
   const last = offers.reduce<string | null>((m, o) => (!m || o.last_checked_at > m ? o.last_checked_at : m), null);
   const dailyLowest = new Map<string, { day: string; price: number; timestamp: number }>();
   for (const point of history) {
+    if (!point.in_stock) continue;
     const date = new Date(point.recorded_at);
     const key = date.toISOString().slice(0, 10);
     const current = dailyLowest.get(key);
