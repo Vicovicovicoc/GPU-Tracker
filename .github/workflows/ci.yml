@@ -1,6 +1,6 @@
 name: GPU Tracker CI
 
-"on":
+on:
   push:
     branches:
       - main
@@ -29,7 +29,8 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Lint (excluding legacy formatting-only rule)
-        run: bunx eslint . --rule "prettier/prettier: off"
+        run: >-
+          bunx eslint . --rule '{"prettier/prettier":"off"}'
 
       - name: Tests
         run: bun run test
