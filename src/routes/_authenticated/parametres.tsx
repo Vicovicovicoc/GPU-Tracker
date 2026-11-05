@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { settingsQuery } from "@/lib/queries";
 import { BRANDS, STORES } from "@/lib/stores";
 import { sendTestReport } from "@/lib/gpu.functions";
@@ -23,7 +24,7 @@ function Parametres() {
   const { data: s } = useQuery(settingsQuery);
   if (!s) return null;
 
-  async function save(patch: Record<string, unknown>) {
+  async function save(patch: Database["public"]["Tables"]["user_settings"]["Update"]) {
     const { error } = await supabase.from("user_settings").update(patch).eq("user_id", s!.user_id);
     if (error) toast.error(error.message); else toast.success("Enregistré");
     qc.invalidateQueries({ queryKey: ["settings"] });
