@@ -7,7 +7,7 @@ export interface Offer {
   in_stock: boolean; last_checked_at: string; gpu_id: string;
 }
 
-export function OfferCard({ o, brand }: { o: Offer; brand?: string }) {
+export function OfferCard({ o, brand }: { o: Offer; brand?: string | undefined }) {
   const d = discountPct(o.price, o.old_price);
   return (
     <div className="flex flex-col rounded-xl border bg-card-gradient p-4 transition-shadow hover:shadow-glow animate-rise">
