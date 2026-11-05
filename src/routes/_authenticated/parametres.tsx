@@ -84,7 +84,20 @@ function Parametres() {
           <div><Label>Seuil de baisse (%)</Label><Input type="number" min={1} max={90} defaultValue={s.drop_threshold} onBlur={(e) => saveNumber(e.target.value, "drop_threshold")} /></div>
           <div><Label>Actualisation (heures)</Label><Input type="number" min={1} max={24} defaultValue={s.refresh_hours} onBlur={(e) => saveNumber(e.target.value, "refresh_hours")} /></div>
         </div>
-        <Button variant="outline" onClick={async () => { const r = await test(); r.sent ? toast.success("Rapport envoyé") : toast.info("Pas encore de prix à envoyer"); }}>Envoyer un rapport test</Button>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            try {
+              const result = await test();
+              if (result.sent) toast.success("Rapport envoyé");
+              else toast.info("Pas encore de prix à envoyer");
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : "Impossible d'envoyer le rapport.");
+            }
+          }}
+        >
+          Envoyer un rapport test
+        </Button>
       </section>
       <section className="space-y-3 rounded-xl border bg-card-gradient p-5">
         <h2 className="font-semibold">Marques</h2>
