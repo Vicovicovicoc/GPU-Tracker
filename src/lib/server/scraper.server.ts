@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STORES, storeName, titleMatches } from "@/lib/stores";
 import { sendEmail, emailLayout, offerRow } from "./brevo.server";
+import { parseListing } from "@/lib/parse-listing";
 
 const FC = "https://api.firecrawl.dev/v2";
 
@@ -9,27 +10,6 @@ function fcHeaders() {
   if (!key) throw new Error("Firecrawl n'est pas configuré");
   return { "Content-Type": "application/json", Authorization: `Bearer ${key}` };
 }
-
-const PRODUCT_SCHEMA = {
-  type: "object",
-  properties: {
-    products: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          price: { type: "number", description: "Prix actuel TTC en euros" },
-          old_price: { type: ["number", "null"], description: "Prix barré / ancien prix en euros si affiché, sinon null" },
-          in_stock: { type: "boolean" },
-          url: { type: "string", description: "Lien vers la fiche produit" },
-        },
-        required: ["title", "price", "url"],
-      },
-    },
-  },
-  required: ["products"],
-};
 
 /** Start a Firecrawl batch scrape for every due GPU × store. Returns the batch id or null. */
 export async function startRefresh({ force = false } = {}) {
@@ -40,7 +20,7 @@ export async function startRefresh({ force = false } = {}) {
   if (pending && pending.length) return { started: false, reason: "Une actualisation est déjà en cours" };
 
   const { data: settings } = await db.from("user_settings").select("refresh_hours,stores");
-  const hours = Math.min(6, ...(settings ?? []).map((s) => s.refresh_hours));
+  const hours = Math.min(24, ...(settings ?? []).map((s) => s.refresh_hours));
   const storeIds = new Set<string>((settings ?? []).flatMap((s) => s.stores));
   if (!storeIds.size) STORES.forEach((s) => storeIds.add(s.id));
 
@@ -59,11 +39,7 @@ export async function startRefresh({ force = false } = {}) {
     headers: fcHeaders(),
     body: JSON.stringify({
       urls: jobs.map((j) => j.url),
-      formats: [{
-        type: "json",
-        schema: PRODUCT_SCHEMA,
-        prompt: "Liste les cartes graphiques neuves ou reconditionnées vendues sur cette page de résultats (pas les accessoires, PC complets ni produits sponsorisés hors sujet). Prix en euros TTC tels qu'affichés. Ne rien inventer : si aucun prix n'est visible, ne pas inclure le produit.",
-      }],
+      formats: ["markdown"],
       onlyMainContent: true,
       location: { country: "FR", languages: ["fr-FR"] },
       ignoreInvalidURLs: true,
@@ -77,8 +53,7 @@ export async function startRefresh({ force = false } = {}) {
   return { started: true, batchId: id, urls: jobs.length };
 }
 
-interface FcDoc { json?: { products?: RawProduct[] }; metadata?: { sourceURL?: string; url?: string; statusCode?: number; error?: string } }
-interface RawProduct { title?: string; price?: number; old_price?: number | null; in_stock?: boolean; url?: string }
+interface FcDoc { markdown?: string; metadata?: { sourceURL?: string; url?: string; statusCode?: number; error?: string } }
 
 /** Poll pending batches and ingest finished ones. */
 export async function syncBatches() {
@@ -137,7 +112,7 @@ async function ingestDocs(docs: FcDoc[]) {
     if (!gpu) continue;
 
     const seen: string[] = [];
-    for (const p of doc.json?.products ?? []) {
+    for (const p of parseListing(doc.markdown ?? "", store.origin)) {
       if (!p.title || !p.url || typeof p.price !== "number") continue;
       if (p.price < 60 || p.price > 6000) continue;
       if (!titleMatches(p.title, gpu.match_token)) continue;
