@@ -15,6 +15,13 @@
       "when": 1793824297900,
       "tag": "0001_scrape_batches",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793910900000,
+      "tag": "0002_comptes_utilisateurs",
+      "breakpoints": true
     }
   ]
 }

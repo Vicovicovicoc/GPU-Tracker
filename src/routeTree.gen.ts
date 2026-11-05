@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAlertesRouteImport } from './routes/_authenticated/alertes'
 import { Route as AuthenticatedBoutiquesRouteImport } from './routes/_authenticated/boutiques'
 import { Route as AuthenticatedCartesRouteImport } from './routes/_authenticated/cartes'
+import { Route as AuthenticatedCompteRouteImport } from './routes/_authenticated/compte'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedNewsletterRouteImport } from './routes/_authenticated/newsletter'
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
@@ -24,6 +26,11 @@ import { Route as ApiPublicJobsRefreshRouteImport } from './routes/api/public/jo
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -48,6 +55,11 @@ const AuthenticatedBoutiquesRoute = AuthenticatedBoutiquesRouteImport.update({
 const AuthenticatedCartesRoute = AuthenticatedCartesRouteImport.update({
   id: '/cartes',
   path: '/cartes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCompteRoute = AuthenticatedCompteRouteImport.update({
+  id: '/compte',
+  path: '/compte',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -80,9 +92,11 @@ const ApiPublicJobsRefreshRoute = ApiPublicJobsRefreshRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/alertes': typeof AuthenticatedAlertesRoute
   '/boutiques': typeof AuthenticatedBoutiquesRoute
   '/cartes': typeof AuthenticatedCartesRoute
+  '/compte': typeof AuthenticatedCompteRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/newsletter': typeof AuthenticatedNewsletterRoute
   '/parametres': typeof AuthenticatedParametresRoute
@@ -92,9 +106,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/alertes': typeof AuthenticatedAlertesRoute
   '/boutiques': typeof AuthenticatedBoutiquesRoute
   '/cartes': typeof AuthenticatedCartesRoute
+  '/compte': typeof AuthenticatedCompteRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/newsletter': typeof AuthenticatedNewsletterRoute
   '/parametres': typeof AuthenticatedParametresRoute
@@ -106,9 +122,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/alertes': typeof AuthenticatedAlertesRoute
   '/_authenticated/boutiques': typeof AuthenticatedBoutiquesRoute
   '/_authenticated/cartes': typeof AuthenticatedCartesRoute
+  '/_authenticated/compte': typeof AuthenticatedCompteRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/newsletter': typeof AuthenticatedNewsletterRoute
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
@@ -120,9 +138,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/alertes'
     | '/boutiques'
     | '/cartes'
+    | '/compte'
     | '/dashboard'
     | '/newsletter'
     | '/parametres'
@@ -132,9 +152,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/alertes'
     | '/boutiques'
     | '/cartes'
+    | '/compte'
     | '/dashboard'
     | '/newsletter'
     | '/parametres'
@@ -145,9 +167,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
     | '/_authenticated/alertes'
     | '/_authenticated/boutiques'
     | '/_authenticated/cartes'
+    | '/_authenticated/compte'
     | '/_authenticated/dashboard'
     | '/_authenticated/newsletter'
     | '/_authenticated/parametres'
@@ -159,6 +183,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicJobsDailyReportRoute: typeof ApiPublicJobsDailyReportRoute
   ApiPublicJobsRefreshRoute: typeof ApiPublicJobsRefreshRoute
 }
@@ -186,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/alertes': {
       id: '/_authenticated/alertes'
       path: '/alertes'
@@ -205,6 +237,13 @@ declare module '@tanstack/react-router' {
       path: '/cartes'
       fullPath: '/cartes'
       preLoaderRoute: typeof AuthenticatedCartesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/compte': {
+      id: '/_authenticated/compte'
+      path: '/compte'
+      fullPath: '/compte'
+      preLoaderRoute: typeof AuthenticatedCompteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -249,6 +288,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertesRoute: typeof AuthenticatedAlertesRoute
   AuthenticatedBoutiquesRoute: typeof AuthenticatedBoutiquesRoute
   AuthenticatedCartesRoute: typeof AuthenticatedCartesRoute
+  AuthenticatedCompteRoute: typeof AuthenticatedCompteRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNewsletterRoute: typeof AuthenticatedNewsletterRoute
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
@@ -258,6 +298,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlertesRoute: AuthenticatedAlertesRoute,
   AuthenticatedBoutiquesRoute: AuthenticatedBoutiquesRoute,
   AuthenticatedCartesRoute: AuthenticatedCartesRoute,
+  AuthenticatedCompteRoute: AuthenticatedCompteRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNewsletterRoute: AuthenticatedNewsletterRoute,
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
@@ -270,6 +311,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicJobsDailyReportRoute: ApiPublicJobsDailyReportRoute,
   ApiPublicJobsRefreshRoute: ApiPublicJobsRefreshRoute,
 }

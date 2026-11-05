@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase-config";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, validateEmail, validatePassword } from "@/lib/password";
 import { lovable } from "@/integrations/lovable/index";
 import "@lovable.dev/cloud-auth-js/styles.css";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"in" | "up">("in");
+  const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -40,10 +41,27 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const emailError = validateEmail(email);
+    if (emailError) { toast.error(emailError); return; }
+    if (mode === "up") {
+      const passwordError = validatePassword(password);
+      if (passwordError) { toast.error(passwordError); return; }
+    }
     setBusy(true);
+    if (mode === "forgot") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: window.location.origin + "/reset-password",
+      });
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      // Même message que l'adresse existe ou non, pour ne pas révéler quels e-mails ont un compte.
+      toast.success("Si un compte existe avec cette adresse, un e-mail de réinitialisation vient d'être envoyé.");
+      setMode("in");
+      return;
+    }
     const { error } = mode === "in"
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/dashboard" } });
+      ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
+      : await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: window.location.origin + "/dashboard" } });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     if (mode === "up") toast.success("Vérifiez votre boîte mail pour confirmer votre compte.");
@@ -73,19 +91,56 @@ function AuthPage() {
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-2xl border bg-card-gradient p-8 shadow-glow animate-rise">
         <div className="font-mono text-xs tracking-[0.3em] text-primary">GPU PRICE TRACKER</div>
-        <h1 className="mt-2 text-2xl font-bold">{mode === "in" ? "Connexion" : "Créer un compte"}</h1>
+        <h1 className="mt-2 text-2xl font-bold">
+          {mode === "in" ? "Connexion" : mode === "up" ? "Créer un compte" : "Mot de passe oublié"}
+        </h1>
+        {mode === "forgot" && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Entrez votre adresse e-mail : nous vous enverrons un lien pour choisir un nouveau mot de passe.
+          </p>
+        )}
         <form onSubmit={submit} className="mt-6 space-y-4">
-          <div className="space-y-1.5"><Label>E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <div className="space-y-1.5"><Label>Mot de passe</Label><Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-          <Button variant="hero" className="w-full" disabled={busy}>{mode === "in" ? "Se connecter" : "Créer le compte"}</Button>
+          <div className="space-y-1.5"><Label>E-mail</Label><Input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          {mode !== "forgot" && (
+            <div className="space-y-1.5">
+              <Label>Mot de passe</Label>
+              <Input
+                type="password"
+                required
+                minLength={mode === "up" ? PASSWORD_MIN_LENGTH : undefined}
+                maxLength={PASSWORD_MAX_LENGTH}
+                autoComplete={mode === "up" ? "new-password" : "current-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {mode === "up" && (
+                <p className="text-xs text-muted-foreground">{PASSWORD_MIN_LENGTH} caractères minimum, avec au moins une lettre et un chiffre.</p>
+              )}
+            </div>
+          )}
+          <Button variant="hero" className="w-full" disabled={busy}>
+            {mode === "in" ? "Se connecter" : mode === "up" ? "Créer le compte" : "Envoyer le lien"}
+          </Button>
+          {mode === "in" && (
+            <button type="button" className="w-full text-right text-xs text-muted-foreground hover:text-foreground" onClick={() => setMode("forgot")}>
+              Mot de passe oublié ?
+            </button>
+          )}
         </form>
-        <div className="my-5 text-center text-xs text-muted-foreground">ou</div>
-        <div className="space-y-2">
-          <Button variant="outline" className="w-full" onClick={() => oauth("google")}>Continuer avec Google</Button>
-          <button type="button" className="lovable-auth-button w-full" onClick={() => oauth("lovable")}>Continue with Lovable</button>
-        </div>
-        <button className="mt-6 w-full text-sm text-muted-foreground hover:text-foreground" onClick={() => setMode(mode === "in" ? "up" : "in")}>
-          {mode === "in" ? "Pas de compte ? Inscrivez-vous" : "Déjà inscrit ? Connectez-vous"}
+        {mode !== "forgot" && (
+          <>
+            <div className="my-5 text-center text-xs text-muted-foreground">ou</div>
+            <div className="space-y-2">
+              <Button variant="outline" className="w-full" onClick={() => oauth("google")}>Continuer avec Google</Button>
+              <button type="button" className="lovable-auth-button w-full" onClick={() => oauth("lovable")}>Continue with Lovable</button>
+            </div>
+          </>
+        )}
+        <button
+          className="mt-6 w-full text-sm text-muted-foreground hover:text-foreground"
+          onClick={() => setMode(mode === "in" ? "up" : "in")}
+        >
+          {mode === "in" ? "Pas de compte ? Inscrivez-vous" : mode === "up" ? "Déjà inscrit ? Connectez-vous" : "Retour à la connexion"}
         </button>
       </div>
     </main>

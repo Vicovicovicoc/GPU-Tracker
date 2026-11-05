@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
-import { Bell, Cpu, LayoutDashboard, LogOut, Menu, Newspaper, Settings, Store, X } from "lucide-react";
+import { Bell, Cpu, LayoutDashboard, LogOut, Menu, Newspaper, Settings, Store, UserRound, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ const nav = [
   { to: "/alertes", label: "Alertes", icon: Bell },
   { to: "/boutiques", label: "Boutiques", icon: Store },
   { to: "/parametres", label: "Paramètres", icon: Settings },
+  { to: "/compte", label: "Mon compte", icon: UserRound },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
