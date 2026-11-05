@@ -5,9 +5,15 @@ import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { triggerRefresh, syncRefresh } from "@/lib/gpu.functions";
-import { batchesQuery } from "@/lib/queries";
+import { adminQuery, batchesQuery } from "@/lib/queries";
 
+/** Le relevé forcé consomme des crédits Firecrawl : le bouton n'est proposé qu'aux administrateurs. */
 export function RefreshButton() {
+  const { data: admin } = useQuery(adminQuery);
+  return admin?.isAdmin ? <AdminRefreshButton /> : null;
+}
+
+function AdminRefreshButton() {
   const qc = useQueryClient();
   const start = useServerFn(triggerRefresh);
   const sync = useServerFn(syncRefresh);

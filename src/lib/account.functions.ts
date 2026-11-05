@@ -28,3 +28,11 @@ export const deleteAccount = createServerFn({ method: "POST" })
     }
     return { deleted: true as const };
   });
+
+/** Indique si l'utilisateur connecté est administrateur (sert à afficher ou masquer les actions réservées). */
+export const getIsAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { isAdmin } = await import("@/lib/server/admin.server");
+    return { isAdmin: await isAdmin(context.userId) };
+  });
