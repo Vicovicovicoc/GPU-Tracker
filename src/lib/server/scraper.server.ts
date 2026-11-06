@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STORES, storeName, titleMatches } from "@/lib/stores";
 import { sendEmail, emailLayout, offerRow } from "./brevo.server";
 import { parseListing, shouldReconcileMissingOffers } from "@/lib/parse-listing";
+import { shouldRecordPriceHistory } from "@/lib/price-history";
 
 const FC = "https://api.firecrawl.dev/v2";
 
@@ -24,13 +25,13 @@ export async function startRefresh({ force = false } = {}) {
   assertDbSuccess(pendingError, "lecture des lots en attente");
   if (pending && pending.length) return { started: false, reason: "Une actualisation est déjà en cours" };
 
-  const { data: settings, error: settingsError } = await db.from("user_settings").select("refresh_hours,stores");
+  const { data: settings, error: settingsError } = await db.from("user_settings").select("stores");
   assertDbSuccess(settingsError, "lecture des préférences");
-  const hours = Math.min(24, ...(settings ?? []).map((s) => s.refresh_hours));
   const storeIds = new Set<string>((settings ?? []).flatMap((s) => s.stores));
   if (!storeIds.size) STORES.forEach((s) => storeIds.add(s.id));
 
-  const cutoff = new Date(Date.now() - (force ? 0 : hours * 3600_000 - 5 * 60_000)).toISOString();
+  // Automatic refreshes run once per day; the cron route restricts their start to 06:00 in Paris.
+  const cutoff = new Date(Date.now() - (force ? 0 : 24 * 3600_000)).toISOString();
   const { data: gpus, error: gpusError } = await db.from("gpus").select("*")
     .or(`last_refreshed_at.is.null,last_refreshed_at.lt.${cutoff}`);
   assertDbSuccess(gpusError, "lecture des cartes graphiques");
@@ -151,8 +152,14 @@ async function ingestDocs(docs: FcDoc[]) {
       }, { onConflict: "url" }).select("id").single();
       assertDbSuccess(offerError, "enregistrement de l'offre");
       if (!offer) throw new Error("Supabase · enregistrement de l'offre : aucun identifiant retourné");
-      const { error: historyError } = await db.from("price_history").insert({ offer_id: offer.id, gpu_id: gpu.id, price: p.price, in_stock: inStock });
-      assertDbSuccess(historyError, "enregistrement de l'historique des prix");
+      const { data: latestHistory, error: latestHistoryError } = await db.from("price_history")
+        .select("price,in_stock,recorded_at").eq("offer_id", offer.id)
+        .order("recorded_at", { ascending: false }).limit(1).maybeSingle();
+      assertDbSuccess(latestHistoryError, "lecture du dernier relevé de prix");
+      if (shouldRecordPriceHistory(latestHistory, { price: p.price, in_stock: inStock }, new Date())) {
+        const { error: historyError } = await db.from("price_history").insert({ offer_id: offer.id, gpu_id: gpu.id, price: p.price, in_stock: inStock });
+        assertDbSuccess(historyError, "enregistrement de l'historique des prix");
+      }
       if (inStock) await checkAlerts({ offerId: offer.id, gpuId: gpu.id, gpuName: gpu.name, title: p.title, store: store.id, url: link, price: p.price, prevPrice: prev ? Number(prev.price) : null });
     }
 
@@ -176,17 +183,20 @@ async function ingestDocs(docs: FcDoc[]) {
 
 async function userEmail(userId: string, fallback: string | null) {
   if (fallback) return fallback;
-  const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error) throw new Error(`Supabase · récupération de l'e-mail utilisateur: ${error.message}`);
   return data.user?.email ?? null;
 }
 
 async function checkAlerts(o: { offerId: string; gpuId: string; gpuName: string; title: string; store: string; url: string; price: number; prevPrice: number | null }) {
   const db = supabaseAdmin;
-  const { data: watchers } = await db.from("watchlist").select("user_id,max_price").eq("gpu_id", o.gpuId);
+  const { data: watchers, error: watchersError } = await db.from("watchlist").select("user_id,max_price").eq("gpu_id", o.gpuId);
+  assertDbSuccess(watchersError, "lecture des abonnements aux alertes");
   if (!watchers?.length) return;
   const since = new Date(Date.now() - 24 * 3600_000).toISOString();
   for (const w of watchers) {
-    const { data: s } = await db.from("user_settings").select("*").eq("user_id", w.user_id).maybeSingle();
+    const { data: s, error: settingsError } = await db.from("user_settings").select("*").eq("user_id", w.user_id).maybeSingle();
+    assertDbSuccess(settingsError, "lecture des paramètres d'alerte");
     if (s && !s.stores.includes(o.store)) continue;
     const threshold = s?.drop_threshold ?? 15;
     const kinds: { kind: string; note: string }[] = [];
@@ -194,16 +204,28 @@ async function checkAlerts(o: { offerId: string; gpuId: string; gpuName: string;
     if (o.prevPrice && ((o.prevPrice - o.price) / o.prevPrice) * 100 >= threshold)
       kinds.push({ kind: "drop", note: `baisse de ${Math.round(((o.prevPrice - o.price) / o.prevPrice) * 100)} % (avant ${o.prevPrice.toFixed(2)} €)` });
     for (const k of kinds) {
-      const { data: already } = await db.from("alert_log").select("id").eq("user_id", w.user_id)
+      const { data: already, error: alreadyError } = await db.from("alert_log").select("id").eq("user_id", w.user_id)
         .eq("offer_id", o.offerId).eq("kind", k.kind).gte("sent_at", since).limit(1);
+      assertDbSuccess(alreadyError, "vérification des alertes déjà envoyées");
       if (already?.length) continue;
       const to = await userEmail(w.user_id, s?.email ?? null);
       if (!to) continue;
       try {
-        await sendEmail(to, `🔔 ${o.gpuName} à ${o.price.toFixed(2)} € chez ${storeName(o.store)}`,
-          emailLayout(`Alerte prix : ${o.gpuName}`, offerRow({ title: o.title, store: storeName(o.store), price: o.price, url: o.url, note: k.note })));
-        await db.from("alert_log").insert({ user_id: w.user_id, offer_id: o.offerId, kind: k.kind, price: o.price });
-      } catch (e) { console.error("alert email failed", e); }
+        // Reserve the 24-hour alert slot before sending, so a retry cannot send it twice.
+        const { data: reservation, error: reservationError } = await db.from("alert_log")
+          .insert({ user_id: w.user_id, offer_id: o.offerId, kind: k.kind, price: o.price })
+          .select("id").single();
+        assertDbSuccess(reservationError, "réservation de l'alerte");
+        if (!reservation) throw new Error("Réservation d'alerte sans identifiant retourné");
+        try {
+          await sendEmail(to, `🔔 ${o.gpuName} à ${o.price.toFixed(2)} € chez ${storeName(o.store)}`,
+            emailLayout(`Alerte prix : ${o.gpuName}`, offerRow({ title: o.title, store: storeName(o.store), price: o.price, url: o.url, note: k.note })));
+        } catch (emailError) {
+          const { error: rollbackError } = await db.from("alert_log").delete().eq("id", reservation.id);
+          assertDbSuccess(rollbackError, "annulation de la réservation après échec e-mail");
+          throw emailError;
+        }
+      } catch (e) { console.error("alert delivery failed", e); }
     }
   }
 }

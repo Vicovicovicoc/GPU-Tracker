@@ -56,7 +56,9 @@ describe("tâche planifiée de relevé des prix", () => {
     expect(mocks.startRefresh).not.toHaveBeenCalled();
   });
 
-  it("synchronise puis lance un relevé normal (non forcé) sans exiger de rôle administrateur", async () => {
+  it("synchronise les lots et lance le relevé à 6 h (heure de Paris)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-05T05:00:00Z")); // 6 h à Paris en heure d'hiver
     mocks.authenticateCronRequest.mockResolvedValue(null);
     mocks.syncBatches.mockResolvedValue({ ingested: 0, pending: 0 });
     mocks.startRefresh.mockResolvedValue({ started: true, batchId: "b1", urls: 4 });
@@ -67,6 +69,35 @@ describe("tâche planifiée de relevé des prix", () => {
     await expect(response.json()).resolves.toMatchObject({ success: true, start: { started: true } });
     expect(mocks.syncBatches).toHaveBeenCalledTimes(1);
     expect(mocks.startRefresh).toHaveBeenCalledWith();
+    expectNoUserGuardUsed();
+  });
+
+  it("déclenche aussi à 6 h en heure d'été (04 h UTC)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-05T04:00:00Z")); // 6 h à Paris en heure d'été
+    mocks.authenticateCronRequest.mockResolvedValue(null);
+    mocks.syncBatches.mockResolvedValue({ ingested: 0, pending: 0 });
+    mocks.startRefresh.mockResolvedValue({ started: true, batchId: "b2", urls: 4 });
+
+    const response = await post(RefreshRoute)({ request: request() });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ success: true, start: { started: true } });
+    expect(mocks.startRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("synchronise les lots mais ne démarre aucun nouveau relevé en dehors de 6 h", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-05T06:00:00Z")); // 7 h à Paris en heure d'hiver
+    mocks.authenticateCronRequest.mockResolvedValue(null);
+    mocks.syncBatches.mockResolvedValue({ ingested: 0, pending: 0 });
+
+    const response = await post(RefreshRoute)({ request: request() });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ success: true, start: { started: false } });
+    expect(mocks.syncBatches).toHaveBeenCalledTimes(1);
+    expect(mocks.startRefresh).not.toHaveBeenCalled();
     expectNoUserGuardUsed();
   });
 });

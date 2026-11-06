@@ -41,7 +41,12 @@ Renseigne les variables de `.env.local` avec les valeurs de ton projet. Les clé
 - Mot de passe oublié : lien envoyé par e-mail, page `/reset-password`.
 - Page `/compte` : changement d'e-mail et de mot de passe, suppression du compte et de ses données.
 - Les réglages de l'utilisateur sont créés automatiquement à l'inscription (migration `0002_comptes_utilisateurs.sql`).
-- Seuls les administrateurs peuvent ajouter des cartes graphiques et lancer un relevé de prix forcé (bouton « Actualiser les prix »). Le relevé automatique n'est pas concerné.
+- Seuls les administrateurs peuvent ajouter des cartes graphiques et lancer un relevé de prix forcé (bouton « Actualiser les prix »).
+- Le relevé automatique démarre une fois par jour à 06:00, heure de Paris. La tâche planifiée peut être appelée plus souvent pour synchroniser les lots en cours, mais elle ne démarre pas de nouveau scraping en dehors de cette heure.
+
+## Planification du relevé quotidien
+
+La planification des appels HTTP Lovable Cloud est configurée hors du dépôt Git. Pour le relevé à 06:00 en heure de Paris, règle l'appel POST vers `/api/public/jobs/refresh` sur **04:00 et 05:00 UTC chaque jour** (`0 4,5 * * *`). Le code vérifie le fuseau `Europe/Paris` : une seule des deux exécutions démarre le relevé, selon l'heure d'été ou d'hiver. Les autres appels éventuels ne font que synchroniser les lots déjà lancés.
 
 ## Déploiement de la base Lovable Cloud
 
