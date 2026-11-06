@@ -22,7 +22,7 @@ export function extractPrices(text: string): number[] {
  * A stock reconciliation is safe only when at least one matching product was parsed.
  * An empty/unrecognized result must not be interpreted as proof that every offer vanished.
  */
-export function shouldReconcileMissingOffers(matchingProducts: readonly unknown[]): boolean {
+export function shouldReconcileMissingOffers(matchingProducts: readonly ParsedProduct[]): boolean {
   return matchingProducts.length > 0;
 }
 
