@@ -39,7 +39,7 @@ function Parametres() {
     }
   }
 
-  function saveNumber(value: string, field: "budget_max" | "drop_threshold" | "refresh_hours") {
+  function saveNumber(value: string, field: "budget_max" | "drop_threshold") {
     if (value.trim() === "" && field === "budget_max") {
       void save({ budget_max: null });
       return;
@@ -57,13 +57,8 @@ function Parametres() {
       toast.error("Le seuil doit être compris entre 1 et 90 %.");
       return;
     }
-    if (field === "refresh_hours" && (number < 1 || number > 24)) {
-      toast.error("L'actualisation doit être comprise entre 1 et 24 heures.");
-      return;
-    }
     if (field === "budget_max") void save({ budget_max: number });
-    else if (field === "drop_threshold") void save({ drop_threshold: number });
-    else void save({ refresh_hours: number });
+    else void save({ drop_threshold: number });
   }
 
   function saveEmail(value: string) {
@@ -88,7 +83,10 @@ function Parametres() {
           <div><Label>E-mail</Label><Input type="email" defaultValue={s.email ?? ""} onBlur={(e) => saveEmail(e.target.value)} /></div>
           <div><Label>Budget max (€)</Label><Input type="number" min={1} step="0.01" defaultValue={s.budget_max ?? ""} onBlur={(e) => saveNumber(e.target.value, "budget_max")} /></div>
           <div><Label>Seuil de baisse (%)</Label><Input type="number" min={1} max={90} defaultValue={s.drop_threshold} onBlur={(e) => saveNumber(e.target.value, "drop_threshold")} /></div>
-          <div><Label>Actualisation (heures)</Label><Input type="number" min={1} max={24} defaultValue={s.refresh_hours} onBlur={(e) => saveNumber(e.target.value, "refresh_hours")} /></div>
+          <div className="rounded-lg border border-border/60 p-3 text-sm">
+            <Label>Actualisation automatique</Label>
+            <p className="mt-1 text-muted-foreground">Une fois par jour à 6 h (heure de Paris).</p>
+          </div>
         </div>
         <Button
           variant="outline"
