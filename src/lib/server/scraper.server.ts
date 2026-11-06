@@ -5,6 +5,10 @@ import { parseListing, shouldReconcileMissingOffers } from "@/lib/parse-listing"
 
 const FC = "https://api.firecrawl.dev/v2";
 
+function assertDbSuccess(error: { message: string } | null, operation: string): void {
+  if (error) throw new Error(`Supabase · ${operation}: ${error.message}`);
+}
+
 function fcHeaders() {
   const key = process.env['FIRECRAWL_API_KEY'];
   if (!key) throw new Error("Firecrawl n'est pas configuré");
@@ -14,25 +18,29 @@ function fcHeaders() {
 /** Start a Firecrawl batch scrape for every due GPU × store. Returns the batch id or null. */
 export async function startRefresh({ force = false } = {}) {
   const db = supabaseAdmin;
-  const { data: pending } = await db
+  const { data: pending, error: pendingError } = await db
     .from("scrape_batches").select("id,started_at").eq("status", "pending")
     .gte("started_at", new Date(Date.now() - 20 * 60_000).toISOString());
+  assertDbSuccess(pendingError, "lecture des lots en attente");
   if (pending && pending.length) return { started: false, reason: "Une actualisation est déjà en cours" };
 
-  const { data: settings } = await db.from("user_settings").select("refresh_hours,stores");
+  const { data: settings, error: settingsError } = await db.from("user_settings").select("refresh_hours,stores");
+  assertDbSuccess(settingsError, "lecture des préférences");
   const hours = Math.min(24, ...(settings ?? []).map((s) => s.refresh_hours));
   const storeIds = new Set<string>((settings ?? []).flatMap((s) => s.stores));
   if (!storeIds.size) STORES.forEach((s) => storeIds.add(s.id));
 
   const cutoff = new Date(Date.now() - (force ? 0 : hours * 3600_000 - 5 * 60_000)).toISOString();
-  const { data: gpus } = await db.from("gpus").select("*")
+  const { data: gpus, error: gpusError } = await db.from("gpus").select("*")
     .or(`last_refreshed_at.is.null,last_refreshed_at.lt.${cutoff}`);
+  assertDbSuccess(gpusError, "lecture des cartes graphiques");
   if (!gpus?.length) return { started: false, reason: "Rien à actualiser pour le moment" };
 
   const jobs = gpus.flatMap((g) =>
     STORES.filter((s) => storeIds.has(s.id)).map((s) => ({ url: s.searchUrl(g.search_query), gpu_id: g.id, store: s.id })),
   );
-  await db.from("scrape_jobs").upsert(jobs.map((j) => ({ ...j, started_at: new Date().toISOString() })));
+  const { error: jobsError } = await db.from("scrape_jobs").upsert(jobs.map((j) => ({ ...j, started_at: new Date().toISOString() })));
+  assertDbSuccess(jobsError, "enregistrement des tâches de scraping");
 
   const res = await fetch(`${FC}/batch/scrape`, {
     method: "POST",
@@ -48,8 +56,10 @@ export async function startRefresh({ force = false } = {}) {
   const body = await res.text();
   if (!res.ok) throw new Error(`Firecrawl [${res.status}]: ${body}`);
   const { id } = JSON.parse(body) as { id: string };
-  await db.from("scrape_batches").insert({ id, url_count: jobs.length });
-  await db.from("gpus").update({ last_refreshed_at: new Date().toISOString() }).in("id", gpus.map((g) => g.id));
+  const { error: batchError } = await db.from("scrape_batches").insert({ id, url_count: jobs.length });
+  assertDbSuccess(batchError, "enregistrement du lot Firecrawl");
+  const { error: refreshError } = await db.from("gpus").update({ last_refreshed_at: new Date().toISOString() }).in("id", gpus.map((g) => g.id));
+  assertDbSuccess(refreshError, "mise à jour de la date d'actualisation");
   return { started: true, batchId: id, urls: jobs.length };
 }
 
@@ -58,7 +68,8 @@ interface FcDoc { markdown?: string; metadata?: { sourceURL?: string; url?: stri
 /** Poll pending batches and ingest finished ones. */
 export async function syncBatches() {
   const db = supabaseAdmin;
-  const { data: batches } = await db.from("scrape_batches").select("*").eq("status", "pending").order("started_at");
+  const { data: batches, error: batchesError } = await db.from("scrape_batches").select("*").eq("status", "pending").order("started_at");
+  assertDbSuccess(batchesError, "lecture des lots à synchroniser");
   let ingested = 0;
   for (const b of batches ?? []) {
     let url: string | null = `${FC}/batch/scrape/${b.id}`;
@@ -68,7 +79,8 @@ export async function syncBatches() {
       const res: Response = await fetch(url, { headers: fcHeaders() });
       const text = await res.text();
       if (!res.ok) {
-        await db.from("scrape_batches").update({ status: "failed", error: `[${res.status}] ${text.slice(0, 500)}` }).eq("id", b.id);
+        const { error: failedError } = await db.from("scrape_batches").update({ status: "failed", error: `[${res.status}] ${text.slice(0, 500)}` }).eq("id", b.id);
+        assertDbSuccess(failedError, "enregistrement de l'échec Firecrawl");
         url = null; status = "failed"; break;
       }
       const j = JSON.parse(text) as { status: string; data?: FcDoc[]; next?: string | null };
@@ -79,7 +91,8 @@ export async function syncBatches() {
     }
     if (status === "completed") {
       await ingestDocs(docs);
-      await db.from("scrape_batches").update({ status: "done", ingested_at: new Date().toISOString() }).eq("id", b.id);
+      const { error: doneError } = await db.from("scrape_batches").update({ status: "done", ingested_at: new Date().toISOString() }).eq("id", b.id);
+      assertDbSuccess(doneError, "validation du lot après ingestion");
       ingested++;
     } else if (status !== "failed" && Date.now() - new Date(b.started_at).getTime() > 3 * 3600_000) {
       await db.from("scrape_batches").update({ status: "failed", error: "Délai dépassé" }).eq("id", b.id);
@@ -90,9 +103,11 @@ export async function syncBatches() {
 
 async function ingestDocs(docs: FcDoc[]) {
   const db = supabaseAdmin;
-  const { data: jobs } = await db.from("scrape_jobs").select("url,gpu_id,store");
+  const { data: jobs, error: jobsError } = await db.from("scrape_jobs").select("url,gpu_id,store");
+  assertDbSuccess(jobsError, "lecture des tâches de scraping");
   const jobByUrl = new Map((jobs ?? []).map((j) => [j.url, j]));
-  const { data: gpus } = await db.from("gpus").select("id,name,match_token");
+  const { data: gpus, error: gpusError } = await db.from("gpus").select("id,name,match_token");
+  assertDbSuccess(gpusError, "lecture des cartes graphiques pour ingestion");
   const gpuById = new Map((gpus ?? []).map((g) => [g.id, g]));
   const now = new Date().toISOString();
   const storeOk = new Map<string, string | null>();
@@ -127,13 +142,16 @@ async function ingestDocs(docs: FcDoc[]) {
       const inStock = p.in_stock !== false;
       seen.push(link);
 
-      const { data: prev } = await db.from("offers").select("id,price").eq("url", link).maybeSingle();
-      const { data: offer } = await db.from("offers").upsert({
+      const { data: prev, error: previousOfferError } = await db.from("offers").select("id,price").eq("url", link).maybeSingle();
+      assertDbSuccess(previousOfferError, "lecture de l'offre précédente");
+      const { data: offer, error: offerError } = await db.from("offers").upsert({
         gpu_id: gpu.id, store: store.id, title: p.title.slice(0, 300), url: link,
         price: p.price, old_price: old, in_stock: inStock, last_checked_at: now,
       }, { onConflict: "url" }).select("id").single();
-      if (!offer) continue;
-      await db.from("price_history").insert({ offer_id: offer.id, gpu_id: gpu.id, price: p.price, in_stock: inStock });
+      assertDbSuccess(offerError, "enregistrement de l'offre");
+      if (!offer) throw new Error("Supabase · enregistrement de l'offre : aucun identifiant retourné");
+      const { error: historyError } = await db.from("price_history").insert({ offer_id: offer.id, gpu_id: gpu.id, price: p.price, in_stock: inStock });
+      assertDbSuccess(historyError, "enregistrement de l'historique des prix");
       if (inStock) await checkAlerts({ offerId: offer.id, gpuId: gpu.id, gpuName: gpu.name, title: p.title, store: store.id, url: link, price: p.price, prevPrice: prev ? Number(prev.price) : null });
     }
 
@@ -142,14 +160,16 @@ async function ingestDocs(docs: FcDoc[]) {
     if (shouldReconcileMissingOffers(seen)) {
       let q = db.from("offers").update({ in_stock: false, last_checked_at: now }).eq("gpu_id", gpu.id).eq("store", store.id);
       q = q.not("url", "in", `(${seen.map((u) => `"${u.replace(/"/g, "")}"`).join(",")})`);
-      await q;
+      const { error: reconcileError } = await q;
+      assertDbSuccess(reconcileError, "mise à jour des disponibilités");
     }
   }
 
   for (const [store, err] of storeOk) {
-    await db.from("store_status").upsert(err
+    const { error: storeStatusError } = await db.from("store_status").upsert(err
       ? { store, last_error: err, last_attempt_at: now }
       : { store, last_error: null, last_attempt_at: now, last_success_at: now });
+    assertDbSuccess(storeStatusError, "mise à jour du statut de la boutique");
   }
 }
 
