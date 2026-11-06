@@ -18,6 +18,14 @@ export function extractPrices(text: string): number[] {
   return out;
 }
 
+/**
+ * A stock reconciliation is safe only when at least one matching product was parsed.
+ * An empty/unrecognized result must not be interpreted as proof that every offer vanished.
+ */
+export function shouldReconcileMissingOffers(matchingProducts: readonly ParsedProduct[]): boolean {
+  return matchingProducts.length > 0;
+}
+
 /** Parse a shop search-results page (Firecrawl markdown) into products, without AI. */
 export function parseListing(md: string, origin: string): ParsedProduct[] {
   const links = [...md.matchAll(/\[([^\]\n]{12,300})\]\(([^)\s]+)/g)];
