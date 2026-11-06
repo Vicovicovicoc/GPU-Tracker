@@ -7,6 +7,6 @@ describe("stock reconciliation safety", () => {
   });
 
   it("allows reconciliation when at least one matching GPU listing was parsed", () => {
-    expect(shouldReconcileMissingOffers([{ title: "Radeon RX 9060 XT" }])).toBe(true);
+    expect(shouldReconcileMissingOffers([{ title: "Radeon RX 9060 XT", url: "https://shop.example/gpu", price: 399, old_price: null, in_stock: true }])).toBe(true);
   });
 });
