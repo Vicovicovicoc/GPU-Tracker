@@ -72,6 +72,20 @@ describe("tâche planifiée de relevé des prix", () => {
     expectNoUserGuardUsed();
   });
 
+  it("déclenche aussi à 6 h en heure d'été (04 h UTC)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-05T04:00:00Z")); // 6 h à Paris en heure d'été
+    mocks.authenticateCronRequest.mockResolvedValue(null);
+    mocks.syncBatches.mockResolvedValue({ ingested: 0, pending: 0 });
+    mocks.startRefresh.mockResolvedValue({ started: true, batchId: "b2", urls: 4 });
+
+    const response = await post(RefreshRoute)({ request: request() });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ success: true, start: { started: true } });
+    expect(mocks.startRefresh).toHaveBeenCalledTimes(1);
+  });
+
   it("synchronise les lots mais ne démarre aucun nouveau relevé en dehors de 6 h", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-11-05T06:00:00Z")); // 7 h à Paris en heure d'hiver
