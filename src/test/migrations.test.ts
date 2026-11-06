@@ -14,6 +14,23 @@ describe("migration 0003 — has_role", () => {
     expect(sql).toMatch(/'service_role'/);
   });
 
+  // Extrait le corps de has_role : les commentaires de la migration citent l'ancien défaut et ne comptent pas.
+  const hasRoleBody = sql.match(/CREATE OR REPLACE FUNCTION public\.has_role[\s\S]*?\$\$([\s\S]*?)\$\$;/)?.[1] ?? "";
+
+  it("ne donne jamais le droit service_role par défaut quand les claims sont absents", () => {
+    expect(hasRoleBody).not.toBe("");
+    // Ancien défaut : coalesce(<claim role>, 'service_role'). Le défaut d'un claim absent doit être vide.
+    expect(hasRoleBody).not.toMatch(/coalesce\([^;]*,\s*'service_role'\s*\)/);
+    expect(hasRoleBody).toMatch(/->> 'role', ''\)\s*=\s*'service_role'/);
+  });
+
+  it("exige à la fois le rôle PostgreSQL actif et le claim explicite service_role", () => {
+    expect(hasRoleBody).toMatch(/current_setting\('role', true\)\s*=\s*'service_role'/);
+    expect(hasRoleBody).toMatch(/current_setting\('request\.jwt\.claims', true\)/);
+    // Les deux conditions sont liées par AND : l'une sans l'autre ne suffit pas.
+    expect(hasRoleBody).toMatch(/current_setting\('role', true\)\s*=\s*'service_role'\s+AND\s+coalesce\(/);
+  });
+
   it("reste exécutable par les utilisateurs connectés (nécessaire à la politique d'ajout de GPU) mais pas par anon", () => {
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.has_role\(uuid, public\.app_role\) FROM PUBLIC, anon;/);
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.has_role\(uuid, public\.app_role\) TO authenticated, service_role;/);

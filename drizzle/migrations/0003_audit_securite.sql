@@ -7,8 +7,14 @@
 --    et savoir qui est administrateur, alors que la politique "own roles" de user_roles interdit
 --    de lire les rôles des autres.
 --    Maintenant : pour un autre _user_id, la fonction retourne false, comme pour un utilisateur sans rôle,
---    donc rien ne permet de les distinguer. Les appels avec la clé de service (rôle service_role)
---    et depuis l'éditeur SQL (aucun jeton) ne sont pas restreints.
+--    donc rien ne permet de les distinguer. Seuls les appels dont le jeton porte explicitement
+--    role = 'service_role' (clé de service) ne sont pas restreints, et seulement si le rôle PostgreSQL actif
+--    est aussi service_role (PostgreSQL fait SET ROLE depuis le jeton vérifié ; current_setting('role')
+--    reste lisible dans une fonction SECURITY DEFINER). Des claims absents, vides, sans clé « role »,
+--    ou qui affirment service_role depuis un autre rôle, ne donnent JAMAIS ce droit : la fonction répond
+--    alors false pour tout autre utilisateur.
+--    Conséquence : l'éditeur SQL (aucun jeton) n'obtient pas non plus de réponse « true » pour un autre
+--    utilisateur ; il lit user_roles directement (SELECT * FROM public.user_roles).
 --    La politique "admins add gpus" appelle has_role(auth.uid(), 'admin') : elle n'est pas affectée.
 CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
 RETURNS boolean
@@ -24,7 +30,10 @@ AS $$
       AND role = _role
       AND (
         _user_id = auth.uid()
-        OR coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role', 'service_role') = 'service_role'
+        OR (
+          current_setting('role', true) = 'service_role'
+          AND coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role', '') = 'service_role'
+        )
       )
   )
 $$;
