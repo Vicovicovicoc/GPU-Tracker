@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STORES, storeName, titleMatches } from "@/lib/stores";
 import { sendEmail, emailLayout, offerRow } from "./brevo.server";
-import { parseListing } from "@/lib/parse-listing";
+import { parseListing, shouldReconcileMissingOffers } from "@/lib/parse-listing";
 
 const FC = "https://api.firecrawl.dev/v2";
 
@@ -111,11 +111,14 @@ async function ingestDocs(docs: FcDoc[]) {
     storeOk.set(store.id, null);
     if (!gpu) continue;
 
+    const parsedProducts = parseListing(doc.markdown ?? "", store.origin);
+    const matchingProducts = parsedProducts.filter((p) =>
+      p.title && p.url && typeof p.price === "number" &&
+      p.price >= 60 && p.price <= 6000 &&
+      titleMatches(p.title, gpu.match_token),
+    );
     const seen: string[] = [];
-    for (const p of parseListing(doc.markdown ?? "", store.origin)) {
-      if (!p.title || !p.url || typeof p.price !== "number") continue;
-      if (p.price < 60 || p.price > 6000) continue;
-      if (!titleMatches(p.title, gpu.match_token)) continue;
+    for (const p of matchingProducts) {
       let parsedLink: URL;
       try { parsedLink = new URL(p.url, store.origin); } catch { continue; }
       if (parsedLink.origin !== new URL(store.origin).origin) continue;
@@ -133,10 +136,14 @@ async function ingestDocs(docs: FcDoc[]) {
       await db.from("price_history").insert({ offer_id: offer.id, gpu_id: gpu.id, price: p.price, in_stock: inStock });
       if (inStock) await checkAlerts({ offerId: offer.id, gpuId: gpu.id, gpuName: gpu.name, title: p.title, store: store.id, url: link, price: p.price, prevPrice: prev ? Number(prev.price) : null });
     }
-    // Offers previously seen for this card at this store but missing now → out of stock
-    let q = db.from("offers").update({ in_stock: false, last_checked_at: now }).eq("gpu_id", gpu.id).eq("store", store.id);
-    if (seen.length) q = q.not("url", "in", `(${seen.map((u) => `"${u.replace(/"/g, "")}"`).join(",")})`);
-    await q;
+
+    // Fail closed: an empty or unrecognized search result is not proof of a stock outage.
+    // Reconcile missing offers only after at least one valid matching GPU listing was parsed.
+    if (shouldReconcileMissingOffers(seen)) {
+      let q = db.from("offers").update({ in_stock: false, last_checked_at: now }).eq("gpu_id", gpu.id).eq("store", store.id);
+      q = q.not("url", "in", `(${seen.map((u) => `"${u.replace(/"/g, "")}"`).join(",")})`);
+      await q;
+    }
   }
 
   for (const [store, err] of storeOk) {
