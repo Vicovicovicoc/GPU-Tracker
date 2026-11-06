@@ -95,7 +95,8 @@ export async function syncBatches() {
       assertDbSuccess(doneError, "validation du lot après ingestion");
       ingested++;
     } else if (status !== "failed" && Date.now() - new Date(b.started_at).getTime() > 3 * 3600_000) {
-      await db.from("scrape_batches").update({ status: "failed", error: "Délai dépassé" }).eq("id", b.id);
+      const { error: timeoutError } = await db.from("scrape_batches").update({ status: "failed", error: "Délai dépassé" }).eq("id", b.id);
+      assertDbSuccess(timeoutError, "enregistrement du délai dépassé");
     }
   }
   return { ingested, pending: (batches?.length ?? 0) - ingested };
