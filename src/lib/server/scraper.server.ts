@@ -183,7 +183,8 @@ async function ingestDocs(docs: FcDoc[]) {
 
 async function userEmail(userId: string, fallback: string | null) {
   if (fallback) return fallback;
-  const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error) throw new Error(`Supabase · récupération de l'e-mail utilisateur: ${error.message}`);
   return data.user?.email ?? null;
 }
 
