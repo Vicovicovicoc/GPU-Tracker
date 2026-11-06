@@ -233,14 +233,16 @@ async function checkAlerts(o: { offerId: string; gpuId: string; gpuName: string;
 /** Build and send the daily report for one user. */
 export async function sendDailyReport(userId: string) {
   const db = supabaseAdmin;
-  const { data: s } = await db.from("user_settings").select("*").eq("user_id", userId).maybeSingle();
+  const { data: s, error: settingsError } = await db.from("user_settings").select("*").eq("user_id", userId).maybeSingle();
+  assertDbSuccess(settingsError, "lecture des préférences du rapport quotidien");
   const to = await userEmail(userId, s?.email ?? null);
   if (!to) return false;
   const brands = s?.brands ?? ["NVIDIA", "AMD", "Intel"];
   const stores = s?.stores ?? STORES.map((x) => x.id);
   const since = new Date(Date.now() - 24 * 3600_000).toISOString();
 
-  const { data: offers } = await db.from("offers").select("*, gpus!inner(name,brand)").in("store", stores).in("gpus.brand", brands);
+  const { data: offers, error: offersError } = await db.from("offers").select("*, gpus!inner(name,brand)").in("store", stores).in("gpus.brand", brands);
+  assertDbSuccess(offersError, "lecture des offres du rapport quotidien");
   const all = (offers ?? []).map((o) => ({ ...o, price: Number(o.price), old_price: o.old_price ? Number(o.old_price) : null }));
   const inStock = all.filter((o) => o.in_stock && (!s?.budget_max || o.price <= Number(s.budget_max)));
 
@@ -251,12 +253,14 @@ export async function sendDailyReport(userId: string) {
     .sort((a, b) => (b.old_price! - b.price) / b.old_price! - (a.old_price! - a.price) / a.old_price!).slice(0, 6);
   const fresh = inStock.filter((o) => o.first_seen_at >= since).slice(0, 6);
 
-  const { data: hist } = await db.from("price_history").select("offer_id,price,recorded_at").gte("recorded_at", new Date(Date.now() - 48 * 3600_000).toISOString()).order("recorded_at");
+  const { data: hist, error: historyError } = await db.from("price_history").select("offer_id,price,recorded_at").gte("recorded_at", new Date(Date.now() - 48 * 3600_000).toISOString()).order("recorded_at");
+  assertDbSuccess(historyError, "lecture de l'historique du rapport quotidien");
   const firstPrice = new Map<string, number>();
   for (const h of hist ?? []) if (!firstPrice.has(h.offer_id)) firstPrice.set(h.offer_id, Number(h.price));
   const drops = inStock.filter((o) => (firstPrice.get(o.id) ?? 0) > o.price).slice(0, 6);
 
-  const { data: watch } = await db.from("watchlist").select("gpu_id").eq("user_id", userId);
+  const { data: watch, error: watchError } = await db.from("watchlist").select("gpu_id").eq("user_id", userId);
+  assertDbSuccess(watchError, "lecture de la liste de suivi du rapport quotidien");
   const watched = new Set((watch ?? []).map((w) => w.gpu_id));
   const oos = all.filter((o) => !o.in_stock && watched.has(o.gpu_id)).slice(0, 6);
 
