@@ -1,6 +1,12 @@
 /**
  * Checks whether the public Supabase URL and publishable key are available.
  * Supports Vite's browser variables and the server-side Lovable environment.
+ *
+ * NOTE: this is a presence-only check (non-empty string). It verifies that the
+ * public frontend configuration reached the current runtime; it does not test
+ * the connection itself. Both the browser bundle (import.meta.env) and the
+ * server environment (process.env) are accepted so that SSR and client renders
+ * agree on the same answer.
  */
 export function hasSupabaseConfig(values: { url?: string; key?: string }): boolean {
   return Boolean(values.url?.trim() && values.key?.trim());
