@@ -8,7 +8,12 @@ export const Route = createFileRoute("/api/public/jobs/daily-report")({
       POST: async ({ request }) => {
         const authFailure = await authenticateCronRequest(request);
         if (authFailure) return authFailure;
-        const parisHour = Number(new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", hour12: false, timeZone: "Europe/Paris" }).format(new Date()));
+        // On lit l'heure par composantes : en fr-FR, format() renvoie « 08 h », et Number("08 h") vaut NaN,
+        // ce qui faisait ignorer le rapport à chaque exécution.
+        const hourPart = new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: "Europe/Paris" })
+          .formatToParts(new Date())
+          .find((part) => part.type === "hour");
+        const parisHour = Number(hourPart?.value);
         if (parisHour !== 8) return Response.json({ success: true, skipped: true });
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { sendDailyReport } = await import("@/lib/server/scraper.server");

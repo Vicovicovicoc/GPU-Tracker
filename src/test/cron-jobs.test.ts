@@ -93,6 +93,29 @@ describe("tâche planifiée du rapport quotidien", () => {
     expectNoUserGuardUsed();
   });
 
+  it("envoie aussi le rapport à 8 h en heure d'été (06 h UTC)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-05T06:00:00Z")); // 8 h à Paris en heure d'été
+    mocks.authenticateCronRequest.mockResolvedValue(null);
+    mocks.reportUsers.mockResolvedValue({ data: [{ user_id: "u1" }] });
+    mocks.sendDailyReport.mockResolvedValue(true);
+
+    const response = await post(DailyReportRoute)({ request: request() });
+
+    await expect(response.json()).resolves.toEqual({ success: true, sent: 1 });
+  });
+
+  it("n'envoie rien à 7 h (Paris), l'autre exécution quotidienne de la tâche", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-05T06:00:00Z")); // 7 h à Paris en heure d'hiver
+    mocks.authenticateCronRequest.mockResolvedValue(null);
+
+    const response = await post(DailyReportRoute)({ request: request() });
+
+    await expect(response.json()).resolves.toEqual({ success: true, skipped: true });
+    expect(mocks.sendDailyReport).not.toHaveBeenCalled();
+  });
+
   it("n'envoie rien en dehors de 8 h (Paris)", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-11-05T12:00:00Z"));
