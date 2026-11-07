@@ -59,6 +59,16 @@ Les migrations SQL de ce dépôt ne sont pas exécutées automatiquement par la 
 5. Attribue le rôle administrateur au compte voulu en suivant la procédure ci-dessous.
 6. Une fois les migrations et le rôle administrateur vérifiés, la PR qui contient le code associé peut être fusionnée.
 
+### Catalogue des cartes graphiques (migration 0004)
+
+1. Après les migrations 0002 et 0003, ouvre `drizzle/migrations/0004_catalogue_gpu.sql`, copie son contenu complet dans l'éditeur SQL et exécute-le. Elle est **additive et rejouable sans effet** : elle ajoute des colonnes descriptives à `gpus` (gamme, architecture, VRAM, type et bus mémoire, image) et complète le catalogue (55 modèles de bureau : RTX 50/40/30, RX 9000/7000/6000, Arc B/A). Les GPU déjà suivis sont mis à jour sans changement de nom ni perte d'offres, d'historique ou d'alertes ; aucun doublon n'est créé.
+2. Ce fichier est **généré** depuis `src/lib/gpu-catalogue.ts` : pour modifier le catalogue, édite ce fichier puis lance `bun scripts/generate-catalogue-migration.ts` (un test échoue si les deux divergent).
+3. Tant que la 0004 n'est pas appliquée, la fiche affiche les caractéristiques du catalogue embarqué dans le code, mais les nouveaux modèles ne sont ni suivis ni relevés.
+4. Les nouveaux GPU sont relevés au prochain relevé quotidien (6 h, heure de Paris). Le catalogue passe de 15 à 55 cartes : le nombre de pages demandées à Firecrawl est multiplié par environ 3,7 (55 × 7 boutiques) ; surveille ton quota.
+5. La colonne `image_url` est vide : aucune source d'image fiable n'est branchée, la fiche affiche donc un espace réservé plutôt qu'une image inventée.
+
+Les offres affichées (promotions, comparateur, fiche, rapport quotidien) sont filtrées : carte graphique **de bureau** du bon modèle uniquement, hors PC portables, PC complets, processeurs, accessoires et cartes professionnelles (`src/lib/offer-classifier.ts`). Ce filtre masque les anciennes annonces hors catégorie sans rien supprimer en base.
+
 **Important :** ne lance pas la migration 0003 avant la 0002. Ces fichiers créent des objets et ne sont pas destinés à être rejoués. Ne réapplique pas les migrations initiales 0000/0001 sur une base qui contient déjà le schéma de l'application. Si tu ne sais pas si une migration a déjà été exécutée, vérifie d'abord l'existence de ses objets dans l'éditeur SQL ; ne la relance pas à l'aveugle. La synchronisation GitHub ne remplace pas cette étape.
 
 ### Attribuer le premier rôle administrateur

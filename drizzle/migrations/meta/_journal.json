@@ -29,6 +29,13 @@
       "when": 1793911800000,
       "tag": "0003_audit_securite",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793998200000,
+      "tag": "0004_catalogue_gpu",
+      "breakpoints": true
     }
   ]
 }

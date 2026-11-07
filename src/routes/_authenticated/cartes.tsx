@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Star, SlidersHorizontal } from "lucide-react";
@@ -10,22 +10,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { gpusQuery, offersQuery, watchlistQuery } from "@/lib/queries";
 import { BRANDS, eur, storeName } from "@/lib/stores";
+import { gpuSpecs, validOffers } from "@/lib/gpu-offers";
 
 export const Route = createFileRoute("/_authenticated/cartes")({
   head: () => ({ meta: [{ title: "Cartes graphiques — GPU Price Tracker" }] }),
   component: Cartes,
 });
 
+function specLine(gpu: Parameters<typeof gpuSpecs>[0]) {
+  const s = gpuSpecs(gpu);
+  return [s.vramOptions.length ? `${s.vramOptions.join(" / ")} Go` : null, s.memoryType, s.architecture].filter(Boolean).join(" · ") || "Caractéristiques non renseignées";
+}
+
 function Cartes() {
   const qc = useQueryClient();
   const { data: gpus = [], isLoading: loadingGpus } = useQuery(gpusQuery);
-  const { data: offers = [], isLoading: loadingOffers } = useQuery(offersQuery);
+  const { data: allOffers = [], isLoading: loadingOffers } = useQuery(offersQuery);
   const { data: watch = [] } = useQuery(watchlistQuery);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("all");
   const [sort, setSort] = useState("price");
   const [watchedOnly, setWatchedOnly] = useState(false);
 
+  const offers = useMemo(() => validOffers(allOffers, gpus), [allOffers, gpus]);
   const offersByGpu = useMemo(() => {
     const map = new Map<string, typeof offers>();
     for (const offer of offers) {
@@ -124,7 +131,10 @@ function Cartes() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Badge variant="outline">{gpu.brand}</Badge>
-                    <h2 className="mt-2 font-semibold">{gpu.name}</h2>
+                    <h2 className="mt-2 font-semibold">
+                      <Link to="/gpu/$gpuId" params={{ gpuId: gpu.id }} className="hover:text-primary hover:underline" aria-label={`Ouvrir la fiche de ${gpu.name}`}>{gpu.name}</Link>
+                    </h2>
+                    <p className="mt-1 text-xs text-muted-foreground">{specLine(gpu)}</p>
                   </div>
                   <Button size="icon" variant="ghost" onClick={() => toggle(gpu.id)} aria-label={item ? "Ne plus suivre" : "Suivre cette carte"}>
                     <Star className={item ? "fill-primary text-primary" : ""} />

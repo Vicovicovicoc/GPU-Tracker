@@ -65,6 +65,6 @@ describe("migration 0003 — limitation de débit", () => {
 describe("journal des migrations", () => {
   it("référence la migration 0003", () => {
     const journal = JSON.parse(read("meta/_journal.json")) as { entries: { idx: number; tag: string }[] };
-    expect(journal.entries.at(-1)).toMatchObject({ idx: 3, tag: "0003_audit_securite" });
+    expect(journal.entries.find((e) => e.idx === 3)).toMatchObject({ idx: 3, tag: "0003_audit_securite" });
   });
 });

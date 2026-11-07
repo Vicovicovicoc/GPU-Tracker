@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Line, LineChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import { RefreshButton } from "@/components/RefreshButton";
 import { OfferCard } from "@/components/OfferCard";
@@ -9,6 +9,7 @@ import { ChartContainer } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { gpusQuery, offersQuery, historyQuery, storeStatusQuery } from "@/lib/queries";
 import { discountPct, eur } from "@/lib/stores";
+import { isPlausiblePromo, validOffers } from "@/lib/gpu-offers";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Tableau de bord — GPU Price Tracker" }] }),
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { data: gpus = [], isLoading: loadingGpus } = useQuery(gpusQuery);
-  const { data: offers = [], isLoading: loadingOffers } = useQuery(offersQuery);
+  const { data: allOffers = [], isLoading: loadingOffers } = useQuery(offersQuery);
   const { data: stores = [] } = useQuery(storeStatusQuery);
   const [selectedGpu, setSelectedGpu] = useState("");
   const selectedId = selectedGpu || gpus[0]?.id || "";
@@ -26,12 +27,15 @@ function Dashboard() {
     enabled: Boolean(selectedId),
   });
 
+  // Uniquement des cartes graphiques de bureau du bon modèle, avec un lien vers la boutique (voir lib/gpu-offers).
+  const offers = useMemo(() => validOffers(allOffers, gpus), [allOffers, gpus]);
   const inStock = offers.filter((o) => o.in_stock);
-  const promos = inStock.filter((o) => discountPct(o.price, o.old_price) > 0);
+  const promos = inStock.filter((o) => isPlausiblePromo(o.price, o.old_price));
   const best = [...promos]
     .sort((a, b) => discountPct(b.price, b.old_price) - discountPct(a.price, a.old_price))
     .slice(0, 8);
   const brand = new Map(gpus.map((g) => [g.id, g.brand]));
+  const gpuNames = new Map(gpus.map((g) => [g.id, g.name]));
   const operationalStores = stores.filter((s) => !s.last_error && s.last_success_at).length;
   const last = offers.reduce<string | null>((m, o) => (!m || o.last_checked_at > m ? o.last_checked_at : m), null);
   const dailyLowest = new Map<string, { day: string; price: number; timestamp: number }>();
@@ -118,13 +122,13 @@ function Dashboard() {
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 className="text-xl font-semibold">Meilleures promotions</h2>
-            <p className="text-sm text-muted-foreground">Les réductions les plus importantes détectées.</p>
+            <p className="text-sm text-muted-foreground">Cartes graphiques de bureau uniquement : les plus fortes réductions détectées.</p>
           </div>
           <span className="text-xs text-muted-foreground">Dernière mise à jour : {last ? new Date(last).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "Aucune"}</span>
         </div>
         {loadingOffers ? <p className="text-sm text-muted-foreground">Chargement des offres…</p> : best.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {best.map((offer) => <OfferCard key={offer.id} o={offer} brand={brand.get(offer.gpu_id)} />)}
+            {best.map((offer) => <OfferCard key={offer.id} o={offer} brand={brand.get(offer.gpu_id)} gpuName={gpuNames.get(offer.gpu_id)} />)}
           </div>
         ) : (
           <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">Aucune promotion détectée pour le moment. Lance une actualisation pour rechercher de nouvelles offres.</p>
