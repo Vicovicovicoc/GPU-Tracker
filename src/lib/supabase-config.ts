@@ -7,6 +7,7 @@
  * the connection itself. Both the browser bundle (import.meta.env) and the
  * server environment (process.env) are accepted so that SSR and client renders
  * agree on the same answer.
+ * Production builds capture the public frontend configuration at build time.
  */
 export function hasSupabaseConfig(values: { url?: string; key?: string }): boolean {
   return Boolean(values.url?.trim() && values.key?.trim());
