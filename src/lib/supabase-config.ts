@@ -9,7 +9,7 @@
  * agree on the same answer.
  * Production builds capture the public frontend configuration at build time.
  */
-export function hasSupabaseConfig(values: { url?: string; key?: string }): boolean {
+export function hasSupabaseConfig(values: { url?: string | undefined; key?: string | undefined }): boolean {
   return Boolean(values.url?.trim() && values.key?.trim());
 }
 

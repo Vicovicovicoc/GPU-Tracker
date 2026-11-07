@@ -13,7 +13,7 @@ const normalizeEnvAccess = {
   name: "normalize-import-meta-env-bracket-access",
   enforce: "pre" as const,
   transform(code: string, id: string) {
-    if (id.includes("node_modules") || !/\.[cm]?[jt]sx?$/.test(id.split("?")[0])) return null;
+    if (id.includes("node_modules") || !/\.[cm]?[jt]sx?$/.test(id.split("?")[0] ?? id)) return null;
     if (!code.includes("import.meta.env[")) return null;
     const out = code.replace(
       /import\.meta\.env\[\s*(['"])(VITE_[A-Za-z0-9_]+)\1\s*\]/g,
