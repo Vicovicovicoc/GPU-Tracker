@@ -14,4 +14,13 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("expose la fiche d'une carte graphique sous /gpu/:gpuId", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    const matches = router.matchRoutes("/gpu/6f1c2a3e-0000-4000-8000-000000000001");
+
+    expect(matches.at(-1)?.routeId).toBe("/_authenticated/gpu/$gpuId");
+    expect(matches.at(-1)?.params).toEqual({ gpuId: "6f1c2a3e-0000-4000-8000-000000000001" });
+  });
 });

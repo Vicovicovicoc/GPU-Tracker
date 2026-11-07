@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { discountPct, eur, storeName } from "@/lib/stores";
@@ -7,7 +8,7 @@ export interface Offer {
   in_stock: boolean; last_checked_at: string; gpu_id: string;
 }
 
-export function OfferCard({ o, brand }: { o: Offer; brand?: string | undefined }) {
+export function OfferCard({ o, brand, gpuName }: { o: Offer; brand?: string | undefined; gpuName?: string | undefined }) {
   const d = discountPct(o.price, o.old_price);
   return (
     <div className="flex flex-col rounded-xl border bg-card-gradient p-4 transition-shadow hover:shadow-glow animate-rise">
@@ -15,6 +16,11 @@ export function OfferCard({ o, brand }: { o: Offer; brand?: string | undefined }
         <span>{brand ?? ""} · {storeName(o.store)}</span>
         {o.in_stock ? <Badge className="bg-success/15 text-success hover:bg-success/15">En stock</Badge> : <Badge variant="destructive">Rupture</Badge>}
       </div>
+      {gpuName && (
+        <Link to="/gpu/$gpuId" params={{ gpuId: o.gpu_id }} className="mt-2 text-xs font-semibold text-primary hover:underline">
+          Fiche · {gpuName}
+        </Link>
+      )}
       <div className="mt-2 line-clamp-2 min-h-10 text-sm font-medium">{o.title}</div>
       <div className="mt-3 flex items-end gap-2">
         <span className="font-mono text-2xl font-semibold">{eur(o.price)}</span>

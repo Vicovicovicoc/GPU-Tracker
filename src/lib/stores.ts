@@ -36,14 +36,4 @@ export const eur = (n: number | null | undefined) =>
 export const discountPct = (price: number, old?: number | null) =>
   old && old > price ? Math.round(((old - price) / old) * 100) : 0;
 
-/** Does a product title match the tracked GPU (and not a stronger sibling like "Ti"/"XT")? */
-export function titleMatches(title: string, token: string): boolean {
-  const t = ` ${title.toLowerCase().replace(/\s+/g, " ")} `;
-  const tok = token.toLowerCase();
-  if (!t.includes(tok)) return false;
-  if (!/(ti|xt|super)$/.test(tok)) {
-    const re = new RegExp(`${tok.replace(/\s/g, "\\s?")}\\s?(ti|xt|super)\\b`);
-    if (re.test(t)) return false;
-  }
-  return true;
-}
+export { titleMatches } from "./offer-classifier";

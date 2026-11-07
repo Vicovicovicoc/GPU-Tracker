@@ -51,31 +51,49 @@ export type Database = {
       }
       gpus: {
         Row: {
+          architecture: string | null
           brand: string
           created_at: string
           id: string
+          image_url: string | null
           last_refreshed_at: string | null
           match_token: string
+          memory_bus_bits: number | null
+          memory_type: string | null
           name: string
           search_query: string
+          series: string | null
+          vram_options: number[] | null
         }
         Insert: {
+          architecture?: string | null
           brand: string
           created_at?: string
           id?: string
+          image_url?: string | null
           last_refreshed_at?: string | null
           match_token: string
+          memory_bus_bits?: number | null
+          memory_type?: string | null
           name: string
           search_query: string
+          series?: string | null
+          vram_options?: number[] | null
         }
         Update: {
+          architecture?: string | null
           brand?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           last_refreshed_at?: string | null
           match_token?: string
+          memory_bus_bits?: number | null
+          memory_type?: string | null
           name?: string
           search_query?: string
+          series?: string | null
+          vram_options?: number[] | null
         }
         Relationships: []
       }

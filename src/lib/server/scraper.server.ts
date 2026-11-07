@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { STORES, storeName, titleMatches } from "@/lib/stores";
+import { STORES, storeName } from "@/lib/stores";
+import { isDesktopGpuOffer } from "@/lib/offer-classifier";
+import { hasValidMerchantUrl, isPlausiblePromo } from "@/lib/gpu-offers";
 import { sendEmail, emailLayout, offerRow } from "./brevo.server";
 import { parseListing, shouldReconcileMissingOffers } from "@/lib/parse-listing";
 import { shouldRecordPriceHistory } from "@/lib/price-history";
@@ -108,7 +110,7 @@ async function ingestDocs(docs: FcDoc[]) {
   const { data: jobs, error: jobsError } = await db.from("scrape_jobs").select("url,gpu_id,store");
   assertDbSuccess(jobsError, "lecture des tâches de scraping");
   const jobByUrl = new Map((jobs ?? []).map((j) => [j.url, j]));
-  const { data: gpus, error: gpusError } = await db.from("gpus").select("id,name,match_token");
+  const { data: gpus, error: gpusError } = await db.from("gpus").select("id,name,brand,match_token");
   assertDbSuccess(gpusError, "lecture des cartes graphiques pour ingestion");
   const gpuById = new Map((gpus ?? []).map((g) => [g.id, g]));
   const now = new Date().toISOString();
@@ -132,7 +134,8 @@ async function ingestDocs(docs: FcDoc[]) {
     const matchingProducts = parsedProducts.filter((p) =>
       p.title && p.url && typeof p.price === "number" &&
       p.price >= 60 && p.price <= 6000 &&
-      titleMatches(p.title, gpu.match_token),
+      // Carte graphique de bureau du bon modèle uniquement : ni portable, ni PC complet, ni accessoire, ni modèle voisin.
+      isDesktopGpuOffer(p.title, gpu),
     );
     const seen: string[] = [];
     for (const p of matchingProducts) {
@@ -241,15 +244,18 @@ export async function sendDailyReport(userId: string) {
   const stores = s?.stores ?? STORES.map((x) => x.id);
   const since = new Date(Date.now() - 24 * 3600_000).toISOString();
 
-  const { data: offers, error: offersError } = await db.from("offers").select("*, gpus!inner(name,brand)").in("store", stores).in("gpus.brand", brands);
+  const { data: offers, error: offersError } = await db.from("offers").select("*, gpus!inner(name,brand,match_token)").in("store", stores).in("gpus.brand", brands);
   assertDbSuccess(offersError, "lecture des offres du rapport quotidien");
-  const all = (offers ?? []).map((o) => ({ ...o, price: Number(o.price), old_price: o.old_price ? Number(o.old_price) : null }));
+  const all = (offers ?? [])
+    .map((o) => ({ ...o, price: Number(o.price), old_price: o.old_price ? Number(o.old_price) : null }))
+    // Les anciennes annonces hors catégorie (portables, PC…) déjà en base ne doivent pas figurer dans le rapport.
+    .filter((o) => isDesktopGpuOffer(o.title, o.gpus) && hasValidMerchantUrl(o));
   const inStock = all.filter((o) => o.in_stock && (!s?.budget_max || o.price <= Number(s.budget_max)));
 
   const bestByGpu = new Map<string, (typeof all)[number]>();
   for (const o of inStock) { const b = bestByGpu.get(o.gpu_id); if (!b || o.price < b.price) bestByGpu.set(o.gpu_id, o); }
   const best = [...bestByGpu.values()].sort((a, b) => a.price - b.price).slice(0, 8);
-  const promos = inStock.filter((o) => o.old_price && (o.old_price - o.price) / o.old_price >= 0.1)
+  const promos = inStock.filter((o) => isPlausiblePromo(o.price, o.old_price) && (o.old_price! - o.price) / o.old_price! >= 0.1)
     .sort((a, b) => (b.old_price! - b.price) / b.old_price! - (a.old_price! - a.price) / a.old_price!).slice(0, 6);
   const fresh = inStock.filter((o) => o.first_seen_at >= since).slice(0, 6);
 

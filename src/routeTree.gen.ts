@@ -20,6 +20,7 @@ import { Route as AuthenticatedCompteRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedNewsletterRouteImport } from './routes/_authenticated/newsletter'
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
+import { Route as AuthenticatedGpuGpuIdRouteImport } from './routes/_authenticated/gpu.$gpuId'
 import { Route as ApiPublicJobsDailyReportRouteImport } from './routes/api/public/jobs/daily-report'
 import { Route as ApiPublicJobsRefreshRouteImport } from './routes/api/public/jobs/refresh'
 
@@ -77,6 +78,11 @@ const AuthenticatedParametresRoute = AuthenticatedParametresRouteImport.update({
   path: '/parametres',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGpuGpuIdRoute = AuthenticatedGpuGpuIdRouteImport.update({
+  id: '/gpu/$gpuId',
+  path: '/gpu/$gpuId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicJobsDailyReportRoute =
   ApiPublicJobsDailyReportRouteImport.update({
     id: '/api/public/jobs/daily-report',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/newsletter': typeof AuthenticatedNewsletterRoute
   '/parametres': typeof AuthenticatedParametresRoute
+  '/gpu/$gpuId': typeof AuthenticatedGpuGpuIdRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/newsletter': typeof AuthenticatedNewsletterRoute
   '/parametres': typeof AuthenticatedParametresRoute
+  '/gpu/$gpuId': typeof AuthenticatedGpuGpuIdRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/newsletter': typeof AuthenticatedNewsletterRoute
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
+  '/_authenticated/gpu/$gpuId': typeof AuthenticatedGpuGpuIdRoute
   '/api/public/jobs/daily-report': typeof ApiPublicJobsDailyReportRoute
   '/api/public/jobs/refresh': typeof ApiPublicJobsRefreshRoute
 }
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/newsletter'
     | '/parametres'
+    | '/gpu/$gpuId'
     | '/api/public/jobs/daily-report'
     | '/api/public/jobs/refresh'
   fileRoutesByTo: FileRoutesByTo
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/newsletter'
     | '/parametres'
+    | '/gpu/$gpuId'
     | '/api/public/jobs/daily-report'
     | '/api/public/jobs/refresh'
   id:
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/newsletter'
     | '/_authenticated/parametres'
+    | '/_authenticated/gpu/$gpuId'
     | '/api/public/jobs/daily-report'
     | '/api/public/jobs/refresh'
   fileRoutesById: FileRoutesById
@@ -267,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedParametresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/gpu/$gpuId': {
+      id: '/_authenticated/gpu/$gpuId'
+      path: '/gpu/$gpuId'
+      fullPath: '/gpu/$gpuId'
+      preLoaderRoute: typeof AuthenticatedGpuGpuIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/jobs/daily-report': {
       id: '/api/public/jobs/daily-report'
       path: '/api/public/jobs/daily-report'
@@ -292,6 +311,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNewsletterRoute: typeof AuthenticatedNewsletterRoute
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
+  AuthenticatedGpuGpuIdRoute: typeof AuthenticatedGpuGpuIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -302,6 +322,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNewsletterRoute: AuthenticatedNewsletterRoute,
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
+  AuthenticatedGpuGpuIdRoute: AuthenticatedGpuGpuIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
