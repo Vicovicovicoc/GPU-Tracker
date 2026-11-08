@@ -17,7 +17,7 @@ dist-ssr
 *.local
 
 # Environment files (keep the documented template)
-.env
+!.env
 .env.*
 !.env.example
 
