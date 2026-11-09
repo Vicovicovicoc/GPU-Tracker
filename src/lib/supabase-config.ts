@@ -9,14 +9,15 @@
  * agree on the same answer.
  * Production builds capture the public frontend configuration at build time.
  */
-export function hasSupabaseConfig(values: { url?: string; key?: string }): boolean {
+export function hasSupabaseConfig(values: { url?: string | undefined; key?: string | undefined }): boolean {
   return Boolean(values.url?.trim() && values.key?.trim());
 }
 
 export function isSupabaseConfigured(): boolean {
   const serverEnv = typeof process !== "undefined" ? process.env : undefined;
   return hasSupabaseConfig({
-    url: import.meta.env['VITE_SUPABASE_URL'] || serverEnv?.['SUPABASE_URL'],
-    key: import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] || serverEnv?.['SUPABASE_PUBLISHABLE_KEY'],
+    // Dot notation is required: Vite/OXC `define` only replaces static member access.
+    url: import.meta.env.VITE_SUPABASE_URL || serverEnv?.["SUPABASE_URL"],
+    key: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || serverEnv?.["SUPABASE_PUBLISHABLE_KEY"],
   });
 }

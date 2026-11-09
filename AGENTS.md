@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Rules
+- Read `import.meta.env.VITE_*` with dot notation only; generated files using bracket access are normalized by the `normalize-supabase-client-env` pre-plugin in `vite.config.ts`. Why: Vite/OXC `define` skips bracket access, leaving production values undefined.
